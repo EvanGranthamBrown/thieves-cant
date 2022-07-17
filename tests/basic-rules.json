@@ -1,22 +1,22 @@
 {
   "creature": {
     "computed": {
-      "strengthMod": "floor(self.strength / 2)",
-      "dexterityMod": "floor(self.dexterity / 2)",
-      "constitutionMod": "floor(self.constitution / 2)",
-      "intelligenceMod": "floor(self.intelligence / 2)",
-      "wisdomMod": "floor(self.wisdom / 2)",
-      "charismaMod": "floor(self.charisma / 2)",
+      "strengthMod": "floor(strength / 2)",
+      "dexterityMod": "floor(dexterity / 2)",
+      "constitutionMod": "floor(constitution / 2)",
+      "intelligenceMod": "floor(intelligence / 2)",
+      "wisdomMod": "floor(wisdom / 2)",
+      "charismaMod": "floor(charisma / 2)",
 
-      "baseArmorClass": "10 + self.dexterityMod",
-      "armorClass": "self.baseArmorClass",
+      "baseArmorClass": "10 + dexterityMod",
+      "armorClass": "baseArmorClass",
 
-      "strengthSave": "1d20+self.strengthMod",
-      "dexteritySave": "1d20+self.dexterityMod",
-      "constitutionSave": "1d20+self.constitutionMod",
-      "intelligenceSave": "1d20+self.intelligenceMod",
-      "wisdomSave": "1d20+self.wisdomMod",
-      "charismaSave": "1d20+self.charismaMod"
+      "strengthSave": "1d20 + strengthMod",
+      "dexteritySave": "1d20 + dexterityMod",
+      "constitutionSave": "1d20 + constitutionMod",
+      "intelligenceSave": "1d20 + intelligenceMod",
+      "wisdomSave": "1d20 + wisdomMod",
+      "charismaSave": "1d20 + charismaMod"
     },
     "data": {
       "maxHitPoints": {
@@ -24,7 +24,7 @@
       },
       "hitPoints": {
         "type": "natural",
-        "default": "self.maxHitPoints"
+        "default": "maxHitPoints"
       },
       "strength": {
         "type": "natural"

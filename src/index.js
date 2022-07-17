@@ -1,4 +1,4 @@
-import * as DataParsers from "./data-parsers";
+import * as DataParsers from './data-parsers';
 
 export function createTemplate(json) {
   for(const prop in json.data) {

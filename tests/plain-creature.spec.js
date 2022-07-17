@@ -130,6 +130,6 @@ describe('plain creature', () => {
       wisdom: 10,
       charisma: 12,
     });
-    expect(creature.hitPoints).toEqual(10);
+    expect(creature.dexterityMod).toEqual(1);
   });
 });
