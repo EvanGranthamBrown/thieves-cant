@@ -1,0 +1,16 @@
+{
+  "name": "thieves-cant",
+  "version": "0.0.1",
+  "description": "RPG rules engine.",
+  "main": "index.js",
+  "scripts": {
+    "test": "jest"
+  },
+  "author": "Evan Grantham-Brown",
+  "license": "MIT",
+  "devDependencies": {
+    "@babel/cli": "^7.18.6",
+    "@babel/plugin-transform-modules-commonjs": "^7.18.6",
+    "jest": "^28.1.3"
+  }
+}
