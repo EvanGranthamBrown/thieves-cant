@@ -118,18 +118,18 @@ describe('plain creature', () => {
     }).toThrow();
   });
 
-  it('correctly computes values', () => {
-    const Creature = createTemplate(basicRules.creature);
-    const creature = new Creature({
-      maxHitPoints: 10,
-      hitPoints: 10,
-      strength: 8,
-      dexterity: 13,
-      constitution: 14,
-      intelligence: 15,
-      wisdom: 10,
-      charisma: 12,
-    });
-    expect(creature.dexterityMod).toEqual(1);
-  });
+  // it('correctly computes values', () => {
+  //   const Creature = createTemplate(basicRules.creature);
+  //   const creature = new Creature({
+  //     maxHitPoints: 10,
+  //     hitPoints: 10,
+  //     strength: 8,
+  //     dexterity: 13,
+  //     constitution: 14,
+  //     intelligence: 15,
+  //     wisdom: 10,
+  //     charisma: 12,
+  //   });
+  //   expect(creature.dexterityMod).toEqual(1);
+  // });
 });

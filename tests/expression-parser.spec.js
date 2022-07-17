@@ -86,13 +86,11 @@ describe('expressions.evaluate', () => {
 
   it('handles a dot expression', () => {
     const parsed = parse('owner.strength');
-    console.log(parsed);
     expect(evaluate({ owner: { strength: 7 } }, parsed)).toEqual(7);
   });
 
   it('handles a dot expression that goes two deep', () => {
     const parsed = parse('wielder.owner.strength');
-    console.log(parsed);
     expect(evaluate({ wielder: { owner: { strength: 13 } } }, parsed)).toEqual(13);
   });
 });

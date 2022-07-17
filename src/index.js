@@ -1,6 +1,9 @@
 import * as DataParsers from './data-parsers';
+import { parse, validate, evaluate } from './expressions';
 
 export function createTemplate(json) {
+  const defns = {};
+
   for(const prop in json.data) {
     const defn = json.data[prop];
     if(!defn.type) {
@@ -9,20 +12,28 @@ export function createTemplate(json) {
     if(!DataParsers[defn.type]) {
       throw new Error(`Unknown type for data property "${prop}": "${defn.type}"`);
     }
+    defns[prop] = { type: defn.type, parseData: DataParsers[defn.type] };
+    if(defn.default) {
+      const parsed = parse(defn.default);
+      if(validate(json, parsed) !== defn.type) {
+        throw new Error(`Invalid default value for data property "${prop}": ${defn.default}" may not evaluate to type "${defn.type}"`);
+      }
+      defns[prop].default = parsed;
+    }
   }
 
   // dynamically create a class which can be instantiated with new
   return function TemplateClass(data) {
-    for(const prop in json.data) {
-      const defn = json.data[prop];
+    for(const prop in defns) {
+      const defn = defns[prop];
       if(data[prop] === undefined) {
         if(!defn.default) {
           throw new Error(`Missing value for data property "${prop}", and no default found.`);
         } else {
-          this[prop] = defn.default;
+          this[prop] = evaluate(data, defn.default);
         }
       } else {
-        this[prop] = DataParsers[defn.type](data[prop], prop);
+        this[prop] = defn.parseData(data[prop], prop);
       }
     }
   };
