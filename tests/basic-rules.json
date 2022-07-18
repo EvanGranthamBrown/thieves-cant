@@ -1,12 +1,12 @@
 {
   "creature": {
     "computed": {
-      "strengthMod": "floor(strength / 2)",
-      "dexterityMod": "floor(dexterity / 2)",
-      "constitutionMod": "floor(constitution / 2)",
-      "intelligenceMod": "floor(intelligence / 2)",
-      "wisdomMod": "floor(wisdom / 2)",
-      "charismaMod": "floor(charisma / 2)",
+      "strengthMod": "floor(strength / 2) - 5",
+      "dexterityMod": "floor(dexterity / 2) - 5",
+      "constitutionMod": "floor(constitution / 2) - 5",
+      "intelligenceMod": "floor(intelligence / 2) - 5",
+      "wisdomMod": "floor(wisdom / 2) - 5",
+      "charismaMod": "floor(charisma / 2) - 5",
 
       "baseArmorClass": "10 + dexterityMod",
       "armorClass": "baseArmorClass",

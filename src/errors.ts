@@ -1,5 +1,5 @@
 // Function for presenting helpful error messages.
-export function errIf(condition, err, msg, parsed) {
+export function errIf(condition: boolean, err: Error, msg: string, parsed: Object) {
   if(condition) {
     if(parsed) {
       throw new err(`Error in "${textify(parsed)}": ${msg}`);
@@ -8,11 +8,11 @@ export function errIf(condition, err, msg, parsed) {
     }
   }
 }
-export function errUnless(condition, err, msg, parsed) {
+export function errUnless(condition: boolean, err: Error, msg: string, parsed: Object) {
   errIf(!condition, err, msg, parsed);
 }
 
-function textify(parsed) {
+function textify(parsed: Object) {
   if(typeof parsed === 'string') { return parsed; }
   switch(parsed.type) {
     case 'BinaryExpression': {
