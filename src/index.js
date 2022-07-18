@@ -3,6 +3,7 @@ import { parse, validate, evaluate } from './expressions';
 
 export function createTemplate(json) {
   const defns = {};
+  const computed = {};
 
   for(const prop in json.data) {
     const defn = json.data[prop];
@@ -21,6 +22,14 @@ export function createTemplate(json) {
       defns[prop].default = parsed;
     }
   }
+
+  // for(const prop in json.computed) {
+  //   const parsed = parse(json.computed[prop]);
+  //   computed[prop] = {
+  //     parsed,
+  //     type: validate(json, parsed),
+  //   };
+  // }
 
   // dynamically create a class which can be instantiated with new
   return function TemplateClass(data) {
