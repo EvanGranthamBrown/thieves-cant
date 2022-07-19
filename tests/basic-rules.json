@@ -1,48 +1,100 @@
 {
+  "container": {
+    "attrs": {
+      "inventory": {
+        "type": "entity list"
+      }
+    }
+  },
+
   "creature": {
-    "computed": {
-      "strengthMod": "floor(strength / 2) - 5",
-      "dexterityMod": "floor(dexterity / 2) - 5",
-      "constitutionMod": "floor(constitution / 2) - 5",
-      "intelligenceMod": "floor(intelligence / 2) - 5",
-      "wisdomMod": "floor(wisdom / 2) - 5",
-      "charismaMod": "floor(charisma / 2) - 5",
-
-      "baseArmorClass": "10 + dexterityMod",
-      "armorClass": "baseArmorClass",
-
-      "strengthSave": "1d20 + strengthMod",
-      "dexteritySave": "1d20 + dexterityMod",
-      "constitutionSave": "1d20 + constitutionMod",
-      "intelligenceSave": "1d20 + intelligenceMod",
-      "wisdomSave": "1d20 + wisdomMod",
-      "charismaSave": "1d20 + charismaMod"
-    },
-    "data": {
-      "maxHitPoints": {
-        "type": "natural"
-      },
-      "hitPoints": {
-        "type": "natural",
-        "default": "maxHitPoints"
-      },
+    "includes": ["container"],
+    "attrs": {
       "strength": {
-        "type": "natural"
+        "type": "number"
       },
+      "strengthMod": {
+        "type": "number",
+        "calc": "floor(strength / 2) - 5"
+      },
+      "strengthSave": {
+        "type": "number",
+        "calc": "1d20 + strengthMod"
+      },
+
       "dexterity": {
-        "type": "natural"
+        "type": "number"
       },
+      "dexterityMod": {
+        "type": "number",
+        "calc": "floor(dexterity / 2) - 5"
+      },
+      "dexteritySave": {
+        "type": "number",
+        "calc": "1d20 + dexterityMod"
+      },
+
       "constitution": {
-        "type": "natural"
+        "type": "number"
       },
+      "constitutionMod": {
+        "type": "number",
+        "calc": "floor(constitution / 2) - 5"
+      },
+      "constitutionSave": {
+        "type": "number",
+        "calc": "1d20 + constitutionMod"
+      },
+
       "intelligence": {
-        "type": "natural"
+        "type": "number"
       },
+      "intelligenceMod": {
+        "type": "number",
+        "calc": "floor(intelligence / 2) - 5"
+      },
+      "intelligenceSave": {
+        "type": "number",
+        "calc": "1d20 + intelligenceMod"
+      },
+
       "wisdom": {
-        "type": "natural"
+        "type": "number"
       },
+      "wisdomMod": {
+        "type": "number",
+        "calc": "floor(wisdom / 2) - 5"
+      },
+      "wisdomSave": {
+        "type": "number",
+        "calc": "1d20 + wisdomMod"
+      },
+
       "charisma": {
-        "type": "natural"
+        "type": "number"
+      },
+      "charismaMod": {
+        "type": "number",
+        "calc": "floor(charisma / 2) - 5"
+      },
+      "charismaSave": {
+        "type": "number",
+        "calc": "1d20 + charismaMod"
+      },
+
+      "baseArmorClass": {
+        "type": "number",
+        "calc": "10 + dexterityMod"
+      },
+
+      "armorClass": {
+        "type": "number",
+        "calc": "baseArmorClass"
+      },
+
+      "hitPoints": {
+        "type": "number",
+        "calc": "0"
       }
     }
   }

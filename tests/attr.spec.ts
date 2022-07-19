@@ -5,8 +5,7 @@ import { ExprType } from '../src/expr-base';
 describe('EntityTemplate', () => {
   it('runs on a valid template without erroring', () => {
     expect(() => {
-      const entity = new EntityTemplate({
-        name: 'creature',
+      const entity = new EntityTemplate('creature', {
         attrs: {
           dexterity: {
             type: 'number',
@@ -22,8 +21,7 @@ describe('EntityTemplate', () => {
 
   it('errors when an attribute type does not match its calc formula', () => {
     expect(() => {
-      const entity = new EntityTemplate({
-        name: 'creature',
+      const entity = new EntityTemplate('creature', {
         attrs: {
           dexterity: {
             type: 'number',
@@ -38,8 +36,7 @@ describe('EntityTemplate', () => {
   });
 
   it('computes dependencies properly', () => {
-    const entity = new EntityTemplate({
-      name: 'creature',
+    const entity = new EntityTemplate('creature', {
       attrs: {
         dexterity: {
           type: 'number',
@@ -76,8 +73,7 @@ describe('EntityTemplate', () => {
   });
 
   it('computes reverse dependencies properly', () => {
-    const entity = new EntityTemplate({
-      name: 'creature',
+    const entity = new EntityTemplate('creature', {
       attrs: {
         dexterity: {
           type: 'number',
@@ -115,8 +111,7 @@ describe('EntityTemplate', () => {
 
   it('errors on a circular dependency', () => {
     expect(() => {
-      const entity = new EntityTemplate({
-        name: 'creature',
+      const entity = new EntityTemplate('creature', {
         attrs: {
           strMod: {
             type: 'number',

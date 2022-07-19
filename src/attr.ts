@@ -19,19 +19,24 @@ interface Dependency {
 
 export interface EntityTemplateProps {
   readonly attrs: Record<string, AttrTemplateProps>;
-  readonly name: string;
+  readonly includes?: Array<String>;
 }
 
 export class EntityTemplate {
   public name: string;
   public attrs: Record<string, AttrTemplate>;
+  public includes: Array<String>;
 
-  constructor(props: EntityTemplateProps) {
-    this.name = props.name;
+  constructor(name: string, props: EntityTemplateProps) {
+    this.name = name;
+    this.includes = props.includes || [];
     this.attrs = {};
+
     if(Object.keys(props.attrs).length === 0) {
+      // no properties, nothing to do
       return;
     }
+
     for(let prop in props.attrs) {
       this.attrs[prop] = new AttrTemplate(this, prop, props.attrs[prop]);
     }
@@ -80,15 +85,17 @@ export class AttrTemplate {
         throw new AttributeTypeError(`Attribute "${this.name}" has "calc" set but is mutable: ${JSON.stringify(json)}`);
       }
       this.calc = ExprParse.parse(json.calc);
-      if(this.calc.type() !== this.type) {
-        throw new AttributeTypeError(`Attribute "${this.name}" has "calc" formula returning wrong type (expected ${this.type}, got ${this.calc.type()})`);
+      const calcType = this.calc.type();
+      if(calcType !== ExprType.Any && calcType !== this.type) {
+        throw new AttributeTypeError(`Attribute "${this.name}" has "calc" formula returning wrong type (expected ${this.type}, got ${calcType})`);
       }
       this.mutable = false;
     } else {
       if(json.valid) {
         this.valid = ExprParse.parse(json.valid);
-        if(this.valid.type() !== this.type) {
-          throw new AttributeTypeError(`Attribute "${this.name}" has "valid" formula returning wrong type (expected ${this.type}, got ${this.valid.type()})`);
+        const validType = this.calc.type();
+        if(validType !== ExprType.Any && validType !== this.type) {
+          throw new AttributeTypeError(`Attribute "${this.name}" has "valid" formula returning wrong type (expected ${this.type}, got ${validType})`);
         }
       }
       this.mutable = !!json.mutable;
