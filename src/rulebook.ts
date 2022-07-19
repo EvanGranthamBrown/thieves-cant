@@ -8,7 +8,6 @@ export class Rulebook {
     const raw = new RawRulebook(json);
     for(let name in raw.templates) {
       const rawJson = raw.templates[name].json;
-      console.log(JSON.stringify(rawJson));
       this.templates[name] = new EntityTemplate(name, {
         attrs: rawJson.attrs || {},
         includes: rawJson.includes || [],

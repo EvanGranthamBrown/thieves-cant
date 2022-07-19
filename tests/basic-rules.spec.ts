@@ -4,6 +4,7 @@ import basicRules from './basic-rules.json';
 import { Rulebook } from '../src/rulebook';
 
 const rulebook = new Rulebook(basicRules);
+// to do: convert all these tests to using the Rulebook
 
 for(const name in basicRules) {
   describe(`template for "${name}"`, () => {
