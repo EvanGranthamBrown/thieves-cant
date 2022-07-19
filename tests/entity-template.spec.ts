@@ -1,4 +1,4 @@
-import { EntityTemplate } from '../src/attr';
+import { EntityTemplate } from '../src/entity-template';
 import { CircularDependencyError, AttributeTypeError } from '../src/errors';
 import { ExprType } from '../src/expr-base';
 
@@ -56,19 +56,19 @@ describe('EntityTemplate', () => {
       },
     });
 
-    expect(entity.attrs.dexterity.depends).toEqual([
+    expect(entity.__attrs.dexterity.depends).toEqual([
     ]);
 
-    expect(entity.attrs.dexMod.depends).toEqual([
-      { attr: entity.attrs.dexterity, reverseAttr: entity.attrs.dexMod, marked: false },
+    expect(entity.__attrs.dexMod.depends).toEqual([
+      { attr: entity.__attrs.dexterity, reverseAttr: entity.__attrs.dexMod, marked: false },
     ]);
 
-    expect(entity.attrs.initiative.depends).toEqual([
-      { attr: entity.attrs.dexMod, reverseAttr: entity.attrs.initiative, marked: false },
+    expect(entity.__attrs.initiative.depends).toEqual([
+      { attr: entity.__attrs.dexMod, reverseAttr: entity.__attrs.initiative, marked: false },
     ]);
 
-    expect(entity.attrs.baseArmorClass.depends).toEqual([
-      { attr: entity.attrs.dexMod, reverseAttr: entity.attrs.baseArmorClass, marked: false },
+    expect(entity.__attrs.baseArmorClass.depends).toEqual([
+      { attr: entity.__attrs.dexMod, reverseAttr: entity.__attrs.baseArmorClass, marked: false },
     ]);
   });
 
@@ -93,19 +93,19 @@ describe('EntityTemplate', () => {
       },
     });
 
-    expect(entity.attrs.dexterity.reverseDepends).toEqual([
-      { attr: entity.attrs.dexterity, reverseAttr: entity.attrs.dexMod, marked: false },
+    expect(entity.__attrs.dexterity.reverseDepends).toEqual([
+      { attr: entity.__attrs.dexterity, reverseAttr: entity.__attrs.dexMod, marked: false },
     ]);
 
-    expect(entity.attrs.dexMod.reverseDepends).toEqual([
-      { attr: entity.attrs.dexMod, reverseAttr: entity.attrs.initiative, marked: false },
-      { attr: entity.attrs.dexMod, reverseAttr: entity.attrs.baseArmorClass, marked: false },
+    expect(entity.__attrs.dexMod.reverseDepends).toEqual([
+      { attr: entity.__attrs.dexMod, reverseAttr: entity.__attrs.initiative, marked: false },
+      { attr: entity.__attrs.dexMod, reverseAttr: entity.__attrs.baseArmorClass, marked: false },
     ]);
 
-    expect(entity.attrs.initiative.reverseDepends).toEqual([
+    expect(entity.__attrs.initiative.reverseDepends).toEqual([
     ]);
 
-    expect(entity.attrs.baseArmorClass.reverseDepends).toEqual([
+    expect(entity.__attrs.baseArmorClass.reverseDepends).toEqual([
     ]);
   });
 

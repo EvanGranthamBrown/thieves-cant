@@ -41,8 +41,12 @@ export class ParseNode {
   }
 }
 
+interface thingWithProperties {
+  [key: string]: any;
+}
+
 export interface EvalProps {
-  readonly vals: Record<string, any>;
+  readonly vals: thingWithProperties;
   readonly adv?: boolean;
   readonly disadv?: boolean;
   readonly forceMin?: boolean;

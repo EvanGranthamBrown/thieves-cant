@@ -47,16 +47,16 @@ export class ExpressionParseError extends Error {
   }
 };
 
-export class CircularDependencyError extends Error {
-  constructor(message) {
-    super(message);
-    this.name = 'CircularDependencyError';
-  }
-};
-
 export class MalformedTemplateError extends Error {
   constructor(message) {
     super(message);
     this.name = 'MalformedTemplateError';
+  }
+};
+
+export class CircularDependencyError extends Error {
+  constructor(message) {
+    super(message);
+    this.name = 'CircularDependencyError';
   }
 };

@@ -1,6 +1,39 @@
 import * as ExprParse from './expr-parse';
-import { ExprType, ExprTypeNames, ParseNode } from './expr-base';
-import { AttributeTypeError, CircularDependencyError, ExpressionParseError } from './errors';
+import { ExprType } from './expr-base';
+import {
+  AttributeTypeError,
+  CircularDependencyError,
+  ExpressionParseError,
+  MalformedTemplateError,
+} from './errors';
+import { EntityBase, AttrBase } from './entity-base';
+
+export interface EntityTemplateProps {
+  readonly attrs: Record<string, AttrTemplateProps>;
+  readonly includes?: Array<String>;
+}
+
+export class EntityTemplate extends EntityBase {
+  constructor(name: string, props: EntityTemplateProps) {
+    super(name);
+
+    if(Object.keys(props.attrs).length === 0) {
+      // no properties, nothing to do
+      return;
+    }
+
+    for(let prop in props.attrs) {
+      this.__attrs[prop] = new AttrTemplate(this, prop, props.attrs[prop]);
+    }
+    for(let prop in this.__attrs) {
+      this.__attrs[prop].computeDependencies();
+    }
+    for(let prop in this.__attrs) {
+      this.__attrs[prop].checkDependenciesForCircles(new Array<AttrTemplate>());
+    }
+    this.unmarkDependencies();
+  }
+}
 
 export interface AttrTemplateProps {
   readonly name: string;
@@ -11,78 +44,18 @@ export interface AttrTemplateProps {
   readonly mutable?: boolean;
 }
 
-interface Dependency {
-  readonly attr: Attr;
-  readonly reverseAttr: Attr;
-  readonly marked: boolean;
-}
-
-export interface EntityTemplateProps {
-  readonly attrs: Record<string, AttrTemplateProps>;
-  readonly includes?: Array<String>;
-}
-
-export class EntityTemplate {
-  public name: string;
-  public attrs: Record<string, AttrTemplate>;
-  public includes: Array<String>;
-
-  constructor(name: string, props: EntityTemplateProps) {
-    this.name = name;
-    this.includes = props.includes || [];
-    this.attrs = {};
-
-    if(Object.keys(props.attrs).length === 0) {
-      // no properties, nothing to do
-      return;
-    }
-
-    for(let prop in props.attrs) {
-      this.attrs[prop] = new AttrTemplate(this, prop, props.attrs[prop]);
-    }
-    for(let prop in this.attrs) {
-      this.attrs[prop].computeDependencies();
-    }
-    for(let prop in this.attrs) {
-      this.attrs[prop].checkDependenciesForCircles(new Array<AttrTemplate>());
-    }
-    this.unmarkDependencies();
-  }
-
-  public unmarkDependencies() {
-    for(let prop in this.attrs) {
-      this.attrs[prop].unmarkDependencies();
-    }
-  }
-}
-
-export class AttrTemplate {
+export class AttrTemplate extends AttrBase {
   public readonly owner: EntityTemplate;
-  public readonly name: string;
-
-  public readonly calc: ParseNode | undefined;
-  public readonly valid: ParseNode | undefined;
-  public readonly mods: Record<string, ParseNode>;
-  public readonly type: ExprType;
-  public readonly mutable: boolean;
-
-  public depends: Dependency[];
-  public reverseDepends: Dependency[];
 
   constructor(owner: EntityTemplate, name: string, json: AttrTemplateProps) {
-    this.owner = owner;
-    this.name = name;
-    this.type = (json.type as ExprType);
-
-    this.depends = [];
-    this.reverseDepends = [];
+    super(owner, name, json.type as ExprType);
 
     if(json.calc) {
       if(json.valid) {
-        throw new AttributeTypeError(`Attribute "${this.name}" has both "calc" and "valid" set: ${JSON.stringify(json)}`);
+        throw new MalformedTemplateError(`Attribute "${this.name}" has both "calc" and "valid" set: ${JSON.stringify(json)}`);
       }
       if(json.mutable) {
-        throw new AttributeTypeError(`Attribute "${this.name}" has "calc" set but is mutable: ${JSON.stringify(json)}`);
+        throw new MalformedTemplateError(`Attribute "${this.name}" has "calc" set but is mutable: ${JSON.stringify(json)}`);
       }
       this.calc = ExprParse.parse(json.calc);
       const calcType = this.calc.type();
@@ -103,7 +76,7 @@ export class AttrTemplate {
   }
 
   private addDependency(id: string) {
-    const attr = this.owner.attrs[id];
+    const attr = this.owner.__attrs[id];
     if(attr === undefined) {
       throw new ExpressionParseError(`Property "${id}" is not defined on entity "${this.owner.name}".`);
     }
