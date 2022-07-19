@@ -68,4 +68,29 @@ describe('creature entity', () => {
 
     expect(creature.hitPoints).toEqual(0);
   });
+
+  it('can instantiate 1,000 creatures in less than a second', () => {
+    // on my computer, this takes around 60 ms. I'm reasonably comfortable
+    // saying that if this test does not pass on your hardware, you need new
+    // hardware.
+
+    // note that we do NOT require the template to be rebuilt every time.
+    // the template is supposed to do most of the heavy lifting here.
+    const creatureTemplate = new EntityTemplate('creature', basicRules.creature);
+
+    const start = Date.now(); // millisecs since epoch
+    let creatures = [];
+    for(let i = 0; i < 1000; i++) {
+      creatures.push(new Entity(creatureTemplate, {
+        strength: 8,
+        dexterity: 14,
+        constitution: 13,
+        intelligence: 15,
+        wisdom: 10,
+        charisma: 12,
+      }));
+    }
+    const end = Date.now(); // millisecs since epoch
+    expect(end - start).toBeLessThan(1000);
+  })
 });
