@@ -162,7 +162,7 @@ export class FuncNode extends ParseNode {
   }
 
   public identifiers(): string[] {
-    return Array.flatten(this.args.map((x) => x.identifiers()));
+    return this.args.map((x) => x.identifiers()).flat();
   }
 }
 
