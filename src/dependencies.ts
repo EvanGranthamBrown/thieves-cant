@@ -4,94 +4,91 @@ import { CircularDependencyError } from './errors';
 type Constructor<T = {}> = new (...args: any[]) => T;
 
 interface IDependGraph {
-  nodes: Array<DependNode>;
-  acyclic: boolean | undefined;
-  cyclic: boolean | undefined;
+  dependsAcyclic: boolean | undefined;
+  dependsCyclic: boolean | undefined;
 
   addDependNode(node: IDependNode);
   removeDependNode(node: IDependNode);
-  unmark();
-  findCycle();
-  applyEvalOrder();
+
+  unmarkDepends();
+  findDependCycle(): Array<IDependNode> | null;
+  dependsInEvalOrder(): Array<IDependNode>;
+
+  __nodes: Array<IDependNode>;
+  __inEvalOrder: boolean;
 }
 
 export function MixinDependGraph<
   TBase extends Constructor, TDependNode extends Constructor<IDependNode>
 >(DependNode: TDependNode, Base: TBase) {
   return class DependGraph extends Base implements IDependGraph {
-    public nodes: Array<DependNode> = [];
-    public acyclic: boolean | undefined = undefined;
-    public cyclic: boolean | undefined = undefined;
+    public __nodes: Array<DependNode> = [];
+    public __inEvalOrder: boolean = false;
+    public dependsAcyclic: boolean | undefined = undefined;
+    public dependsCyclic: boolean | undefined = undefined;
 
     public addDependNode(node: DependNode) {
-      node.graph = this;
-      node.dependNodeId = this.nodes.length + 1;
-      this.nodes.push(node);
-      if(this.acyclic && node.depends.length && node.dependedBy.length) {
-        // we may have just created a cyclic dependency
-        this.acyclic = undefined;
-        this.cyclic = undefined;
-      }
+      this.__nodes.push(node);
+      node.__addToDependGraph(this);
     }
 
     public removeDependNode(node: DependNode) {
-      const idx = this.nodes.indexOf(node);
+      const idx = this.__nodes.indexOf(node);
       if(idx >= 0) {
-        node.graph = null;
-        node.dependNodeId = NaN;
-        this.nodes.slice(idx);
-        if(this.cyclic && node.depends.length && node.dependedBy.length) {
-          // we may have just broken a cyclic dependency
-          this.acyclic = undefined;
-          this.cyclic = undefined;
-        }
+        this.__nodes.slice(idx);
+        node.__removeFromDependGraph(this);
       }
     }
 
-    public unmark() {
-      for(let node of this.nodes) {
+    public unmarkDepends() {
+      for(let node of this.__nodes) {
         for(let depend of node.depends) {
           depend.marked = false;
         }
       }
     }
 
-    public findCycle() {
-      if(this.acyclic) {
+    public findDependCycle() {
+      if(this.dependsAcyclic) {
         // We have already checked to see if this graph is cyclic. Don't bother.
         return null;
       }
-      for(let node of this.nodes) {
-        if(node.hasUnmarked()) {
-          const output = node.findCycle(new Set<DependNode>());
+      for(let node of this.__nodes) {
+        if(node.hasUnmarkedDepends()) {
+          const output = node.__findDependCycle(new Set<DependNode>());
           if(output) {
-            this.acyclic = false;
-            this.cyclic = true;
-            this.unmark();
+            this.dependsAcyclic = false;
+            this.dependsCyclic = true;
+            this.unmarkDepends();
             return output;
           }
         }
       }
-      this.unmark();
-      this.acyclic = true;
-      this.cyclic = false;
+      this.unmarkDepends();
+      this.dependsAcyclic = true;
+      this.dependsCyclic = false;
       return null;
     }
 
     // Sort the nodes array into the correct evaluation order. Can only be run on a
     // graph which is known to be acyclic.
-    public applyEvalOrder() {
-      if(this.acyclic === undefined) {
-        throw new CircularDependencyError('Run findCycle() before applyEvalOrder().');
+    public dependsInEvalOrder() {
+      if(this.__inEvalOrder) {
+        return this.__nodes;
       }
-      if(this.cyclic) {
-        throw new CircularDependencyError('applyEvalOrder() requires an acyclic graph.');
+      if(this.dependsAcyclic === undefined) {
+        throw new CircularDependencyError('Run findDependCycle() before dependsInEvalOrder().');
       }
-      const leafNodes = new Set<DependNode>(this.nodes.filter((x) => !x.hasUnmarked()));
+      if(this.dependsCyclic) {
+        throw new CircularDependencyError('dependsInEvalOrder() requires an acyclic graph.');
+      }
+      const leafNodes = new Set<DependNode>(this.__nodes.filter((x) => !x.hasUnmarkedDepends()));
       const ordering = new Array<DependNode>();
       this.__addToOrdering(ordering, leafNodes);
-      this.unmark();
-      this.nodes = Array.from(ordering);
+      this.unmarkDepends();
+      this.__inEvalOrder = true;
+      this.__nodes = Array.from(ordering);
+      return this.__nodes;
     }
 
     // Recursive function: Add the specified nodes to the ordering. Then find all nodes
@@ -102,7 +99,7 @@ export function MixinDependGraph<
         ordering.push(node);
         for(let depend of node.dependedBy) {
           depend.marked = true;
-          if(!depend.from.hasUnmarked()) {
+          if(!depend.from.hasUnmarkedDepends()) {
             nextNodes.add(depend.from);
           }
         }
@@ -111,26 +108,50 @@ export function MixinDependGraph<
         this.__addToOrdering(ordering, nextNodes);
       }
     }
+
+    public __onDependAdded() {
+      if(this.dependsAcyclic) {
+        // If this graph was known to be acyclic, it may have become cyclic.
+        this.dependsAcyclic = undefined;
+        this.dependsCyclic = undefined;
+      }
+      // Adding a dependency can change the eval order.
+      this.__inEvalOrder = undefined;
+    }
+
+    public __onDependRemoved() {
+      if(this.dependsCyclic) {
+        // If this graph was known to be cyclic, it may have become acyclic.
+        this.dependsAcyclic = undefined;
+        this.dependsCyclic = undefined;
+      }
+      // Removing a dependency can change the eval order.
+      this.__inEvalOrder = undefined;
+    }
   }
 }
 
 export interface IDependNode {
-  graph: IDependGraph | null;
+  dependNodeId: number;
   depends: Array<DependEdge>;
   dependedBy: Array<DependEdge>;
 
   addDepend(target: IDependNode);
   removeDepend(target: IDependNode);
-  findCycle(path: Set<IDependNode>);
 
-  hasUnmarked();
+  hasUnmarkedDepends();
+  hasDependConnections(): boolean;
 
-  dependNodeId: number;
+  __graph: IDependGraph | null;
+
+  __findDependCycle(path: Set<IDependNode>);
+  __addToDependGraph(graph: IDependGraph);
+  __removeFromDependGraph(graph: IDependGraph);
 }
 
 export function MixinDependNode<TBase extends Constructor>(Base: TBase) {
   return class DependNode extends Base implements IDependNode {
-    public graph: IDependGraph | null = null;
+    public __graph: IDependGraph | null = null;
     public depends: Array<DependEdge> = [];
     public dependedBy: Array<DependEdge> = [];
     public dependNodeId: number = NaN;
@@ -145,10 +166,8 @@ export function MixinDependNode<TBase extends Constructor>(Base: TBase) {
       this.depends.push(edge);
       target.dependedBy.push(edge);
 
-      if(this.graph && this.graph.acyclic) {
-        // We have just added a dependency. The graph may no longer be acyclic.
-        this.graph.acyclic = undefined;
-        this.graph.cyclic = undefined;
+      if(this.__graph) {
+        this.__graph.__onDependAdded();
       }
     }
 
@@ -158,17 +177,15 @@ export function MixinDependNode<TBase extends Constructor>(Base: TBase) {
         if(depend.to === target) {
           this.depends.slice(i, 1);
           target.dependedBy.slice(target.dependedBy.indexOf(depend), 1);
-          if(this.graph && this.graph.cyclic) {
-            // We have just removed a dependency. The graph may no longer be cyclic.
-            this.graph.acyclic = undefined;
-            this.graph.cyclic = undefined;
+          if(this.__graph) {
+            this.__graph.__onDependRemoved();
           }
           return;
         }
       }
     }
 
-    public hasUnmarked() {
+    public hasUnmarkedDepends() {
       for(let depend of this.depends) {
         if(!depend.marked) {
           return true;
@@ -179,7 +196,7 @@ export function MixinDependNode<TBase extends Constructor>(Base: TBase) {
 
     // Given a path through the graph that leads to this node, explores all
     // branches of that path to see if any result in a cycle.
-    public findCycle(path: Set<DependNode>) {
+    public __findDependCycle(path: Set<DependNode>) {
       if(path.has(this)) {
         // We have found a cycle. Return it.
         const pathArr = Array.from(path);
@@ -193,7 +210,7 @@ export function MixinDependNode<TBase extends Constructor>(Base: TBase) {
       for(let depend of this.depends) {
         if(!depend.marked) {
           depend.marked = true;
-          const result = depend.to.findCycle(newPath);
+          const result = depend.to.__findDependCycle(newPath);
           if(result) {
             // One of our dependencies found a cycle. Return it.
             return result;
@@ -202,6 +219,34 @@ export function MixinDependNode<TBase extends Constructor>(Base: TBase) {
       }
 
       return null;
+    }
+
+    public hasDependConnections() {
+      return !!(
+        (this.depends && this.depends.length) ||
+        (this.dependedBy && this.dependedBy.length)
+      );
+    }
+
+    public __addToDependGraph(graph) {
+      this.__graph = graph;
+      this.dependNodeId = graph.__nodes.length;
+      if(this.hasDependConnections()) {
+        this.__graph.__onDependAdded();
+      }
+    }
+
+    public __removeFromDependGraph(graph) {
+      if(this.__graph !== graph) {
+        throw new Error(`Called __removeFromDependGraph but __graph did not match argument.`);
+      }
+      this.__graph = null;
+      this.dependNodeId = NaN;
+      if(this.hasDependConnections()) {
+        this.depends = [];
+        this.dependedBy = [];
+        graph.__onDependRemoved();
+      }
     }
   }
 }

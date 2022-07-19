@@ -28,9 +28,8 @@ export class EntityTemplate extends EntityBase {
     for(let prop in this.__attrs) {
       this.__attrs[prop].computeDependencies();
     }
-    // from DependGraph
-    this.findCycle();
-    this.applyEvalOrder();
+    this.findDependCycle();
+    this.dependsInEvalOrder();
   }
 }
 

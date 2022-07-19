@@ -10,8 +10,8 @@ export class Entity extends EntityBase {
     for(let prop in template.__attrs) {
       this.__attrs[prop].cloneDependencies(template.__attrs[prop]);
     }
-    for(let attr of template.nodes) {
-      this.__attrs[attr.name].initialize(data);
+    for(let prop in template.__attrs) {
+      this.__attrs[prop].initialize(data);
     }
   }
 }

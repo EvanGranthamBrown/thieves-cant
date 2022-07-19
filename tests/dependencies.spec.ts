@@ -29,8 +29,8 @@ describe('MixinDependGraph', () => {
 
     node5.addDepend(node3);
 
-    // This must be executed before applyEvalOrder().
-    graph.findCycle();
+    // This must be executed before dependsInEvalOrder().
+    graph.findDependCycle();
 
     // our graph in crude ASCII art:
     //
@@ -48,11 +48,11 @@ describe('MixinDependGraph', () => {
     // We also expect that where two nodes are ready to evaluate at the
     // same time, the initial ordering is preserved (so 3 evaluates before
     // 4).
-    graph.applyEvalOrder();
-    expect(graph.nodes).toEqual([node3, node4, node2, node5, node1]);
+    const depends = graph.dependsInEvalOrder();
+    expect(depends).toEqual([node3, node4, node2, node5, node1]);
   });
 
-  it('requires findCycle() to run before applyEvalOrder()', () => {
+  it('requires findDependCycle() to run before dependsInEvalOrder()', () => {
     const NodeClass = MixinDependNode(class {});
     const GraphClass = MixinDependGraph(NodeClass, class {});
 
@@ -77,11 +77,11 @@ describe('MixinDependGraph', () => {
     node5.addDepend(node3);
 
     expect(() => {
-      graph.applyEvalOrder();
+      graph.dependsInEvalOrder();
     }).toThrow(CircularDependencyError);
   });
 
-  it('errors if applyEvalOrder() is run on a cyclic graph', () => {
+  it('errors if dependsInEvalOrder() is run on a cyclic graph', () => {
     const NodeClass = MixinDependNode(class {});
     const GraphClass = MixinDependGraph(NodeClass, class {});
 
@@ -109,12 +109,12 @@ describe('MixinDependGraph', () => {
     node3.addDepend(node1);
 
     expect(() => {
-      graph.findCycle();
-      graph.applyEvalOrder();
+      graph.findDependCycle();
+      graph.dependsInEvalOrder();
     }).toThrow(CircularDependencyError);
   });
 
-  it('detects and returns a cycle with findCycle()', () => {
+  it('detects and returns a cycle with findDependCycle()', () => {
     const NodeClass = MixinDependNode(class {});
     const GraphClass = MixinDependGraph(NodeClass, class {});
 
@@ -136,15 +136,15 @@ describe('MixinDependGraph', () => {
     node3.addDepend(node4);
     node4.addDepend(node2);
 
-    const cycle = graph.findCycle();
+    const cycle = graph.findDependCycle();
 
     expect(cycle).toContain(node2);
     expect(cycle).toContain(node3);
     expect(cycle).toContain(node4);
     expect(cycle).not.toContain(node1);
 
-    expect(graph.acyclic).toBe(false);
-    expect(graph.cyclic).toBe(true);
+    expect(graph.dependsAcyclic).toBe(false);
+    expect(graph.dependsCyclic).toBe(true);
   });
 
   it('works properly with other class properties and functions', () => {
