@@ -91,7 +91,6 @@ describe('creature entity', () => {
       }));
     }
     const end = Date.now(); // millisecs since epoch
-    console.log('build 1k took ' + (end - start) + 'ms');
     expect(end - start).toBeLessThan(1000);
   })
 });
