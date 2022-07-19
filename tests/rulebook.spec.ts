@@ -1,8 +1,11 @@
 import { Rulebook } from '../src/rulebook';
+import { EntityTemplate } from '../src/entity-template';
 
 describe('Rulebook', () => {
-  it('resolves includes', () => {
-    const rulebook = new Rulebook({
+  let rulebook: Rulebook;
+
+  beforeEach(() => {
+    rulebook = new Rulebook('Test Rulebook', {
       item: {
         attrs: {
           weight: {
@@ -30,7 +33,13 @@ describe('Rulebook', () => {
         },
       },
     });
-    // write a few real tests here
-    expect(Object.keys(rulebook.templates).length).toEqual(3);
+  })
+  it('generates an entry for each top-level key in the JSON', () => {
+    expect(Object.keys(rulebook.entries)).toEqual(['item', 'armor', 'plate']);
   });
+  it('generates a template for each entry', () => {
+    for(let name in rulebook.entries) {
+      expect(rulebook.entries[name].template).toBeInstanceOf(EntityTemplate);
+    }
+  })
 });

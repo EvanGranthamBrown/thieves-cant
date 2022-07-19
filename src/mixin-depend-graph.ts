@@ -24,15 +24,30 @@ export function MixinDependGraph<
   return class DependGraph extends Base implements IDependGraph {
     public __nodes: Array<DependNode> = [];
     public __inEvalOrder: boolean = false;
+    public dependGraphReady: boolean;
     public dependsAcyclic: boolean | undefined = undefined;
     public dependsCyclic: boolean | undefined = undefined;
 
+    constructor(...args: any[]) {
+      super(...args);
+      this.dependGraphReady = true;
+      if(this.__graphReadyCallback) {
+        this.__graphReadyCallback();
+      }
+    }
+
+    public onDependGraphReady(callback: Function) {
+      this.__graphReadyCallback = callback;
+    }
+
     public addDependNode(node: DependNode) {
+      this.__errInConstructor('addDependNode');
       this.__nodes.push(node);
       node.__addToDependGraph(this);
     }
 
     public removeDependNode(node: DependNode) {
+      this.__errInConstructor('removeDependNode');
       const idx = this.__nodes.indexOf(node);
       if(idx >= 0) {
         this.__nodes.splice(idx, 1);
@@ -41,6 +56,7 @@ export function MixinDependGraph<
     }
 
     public unmarkDepends() {
+      this.__errInConstructor('unmarkDepends');
       for(let node of this.__nodes) {
         for(let depend of node.depends) {
           depend.marked = false;
@@ -49,6 +65,7 @@ export function MixinDependGraph<
     }
 
     public findDependCycle() {
+      this.__errInConstructor('findDependCycle');
       if(this.dependsAcyclic) {
         // We have already checked to see if this graph is cyclic. Don't bother.
         return null;
@@ -73,6 +90,7 @@ export function MixinDependGraph<
     // Sort the nodes array into the correct evaluation order. Can only be run on a
     // graph which is known to be acyclic.
     public dependsInEvalOrder() {
+      this.__errInConstructor('dependsInEvalOrder');
       if(this.__inEvalOrder) {
         return this.__nodes;
       }
@@ -89,6 +107,14 @@ export function MixinDependGraph<
       this.__inEvalOrder = true;
       this.__nodes = Array.from(ordering);
       return this.__nodes;
+    }
+
+    __errInConstructor(funcName: string) {
+      if(!this.dependGraphReady) {
+        throw new Error(
+          `To call ${funcName} in constructor: this.onDependGraphReady(() => ${funcName}(...))`,
+        );
+      }
     }
 
     // Recursive function: Add the specified nodes to the ordering. Then find all nodes

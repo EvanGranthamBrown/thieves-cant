@@ -1,4 +1,4 @@
-import { MixinDependGraph, MixinDependNode } from '../src/depend-graph-mixin';
+import { MixinDependGraph, MixinDependNode } from '../src/mixin-depend-graph';
 import { CircularDependencyError } from '../src/errors';
 
 describe('MixinDependGraph', () => {

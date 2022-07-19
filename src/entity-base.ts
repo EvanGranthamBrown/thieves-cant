@@ -1,4 +1,4 @@
-import { MixinDependGraph, MixinDependNode } from '../src/depend-graph-mixin';
+import { MixinDependGraph, MixinDependNode } from './mixin-depend-graph';
 import { ExprType, ParseNode } from './expr-base';
 
 export const AttrBase = MixinDependNode(class {
