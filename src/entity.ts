@@ -10,7 +10,7 @@ export class Entity extends EntityBase {
     for(let prop in template.__attrs) {
       this.__attrs[prop].cloneDependencies(template.__attrs[prop]);
     }
-    for(let attr of template.__evalOrder) {
+    for(let attr of template.nodes) {
       this.__attrs[attr.name].initialize(data);
     }
   }
@@ -33,8 +33,8 @@ export class Attr extends AttrBase {
         get() { return self.value; },
         set(value: any) {
           self.value = value;
-          for(let depend of self.reverseDepends) {
-            depend.attr.recompute();
+          for(let depend of self.dependedBy) {
+            depend.from.recompute();
           }
         },
         enumerable: true,
@@ -49,10 +49,8 @@ export class Attr extends AttrBase {
 
   public cloneDependencies(template: AttrTemplate) {
     for(let templateDep of template.depends) {
-      const attr = this.owner.__attrs[templateDep.attr.name];
-      const dep = { attr, reverseAttr: this, marked: false };
-      this.depends.push(dep);
-      attr.reverseDepends.push(dep);
+      const attr = this.owner.__attrs[templateDep.from.name];
+      this.addDepend(attr);
     }
   }
 

@@ -12,15 +12,15 @@ describe('MixinDependGraph', () => {
     const graph = new GraphClass();
 
     const node1 = new NodeClass();
-    graph.addNode(node1);
+    graph.addDependNode(node1);
     const node2 = new NodeClass();
-    graph.addNode(node2);
+    graph.addDependNode(node2);
     const node3 = new NodeClass();
-    graph.addNode(node3);
+    graph.addDependNode(node3);
     const node4 = new NodeClass();
-    graph.addNode(node4);
+    graph.addDependNode(node4);
     const node5 = new NodeClass();
-    graph.addNode(node5);
+    graph.addDependNode(node5);
 
     node1.addDepend(node2);
     node1.addDepend(node4);
@@ -59,15 +59,15 @@ describe('MixinDependGraph', () => {
     const graph = new GraphClass();
 
     const node1 = new NodeClass();
-    graph.addNode(node1);
+    graph.addDependNode(node1);
     const node2 = new NodeClass();
-    graph.addNode(node2);
+    graph.addDependNode(node2);
     const node3 = new NodeClass();
-    graph.addNode(node3);
+    graph.addDependNode(node3);
     const node4 = new NodeClass();
-    graph.addNode(node4);
+    graph.addDependNode(node4);
     const node5 = new NodeClass();
-    graph.addNode(node5);
+    graph.addDependNode(node5);
 
     node1.addDepend(node2);
     node1.addDepend(node4);
@@ -88,15 +88,15 @@ describe('MixinDependGraph', () => {
     const graph = new GraphClass();
 
     const node1 = new NodeClass();
-    graph.addNode(node1);
+    graph.addDependNode(node1);
     const node2 = new NodeClass();
-    graph.addNode(node2);
+    graph.addDependNode(node2);
     const node3 = new NodeClass();
-    graph.addNode(node3);
+    graph.addDependNode(node3);
     const node4 = new NodeClass();
-    graph.addNode(node4);
+    graph.addDependNode(node4);
     const node5 = new NodeClass();
-    graph.addNode(node5);
+    graph.addDependNode(node5);
 
     node1.addDepend(node2);
     node1.addDepend(node4);
@@ -121,15 +121,15 @@ describe('MixinDependGraph', () => {
     const graph = new GraphClass();
 
     const node1 = new NodeClass();
-    graph.addNode(node1);
+    graph.addDependNode(node1);
     const node2 = new NodeClass();
-    graph.addNode(node2);
+    graph.addDependNode(node2);
     const node3 = new NodeClass();
-    graph.addNode(node3);
+    graph.addDependNode(node3);
     const node4 = new NodeClass();
-    graph.addNode(node4);
+    graph.addDependNode(node4);
     const node5 = new NodeClass();
-    graph.addNode(node5);
+    graph.addDependNode(node5);
 
     node1.addDepend(node2);
     node2.addDepend(node3);

@@ -8,8 +8,8 @@ interface IDependGraph {
   acyclic: boolean | undefined;
   cyclic: boolean | undefined;
 
-  addNode(node: IDependNode);
-  removeNode(node: IDependNode);
+  addDependNode(node: IDependNode);
+  removeDependNode(node: IDependNode);
   unmark();
   findCycle();
   applyEvalOrder();
@@ -23,11 +23,7 @@ export function MixinDependGraph<
     public acyclic: boolean | undefined = undefined;
     public cyclic: boolean | undefined = undefined;
 
-    constructor(args: any[]) {
-      super(args);
-    }
-
-    public addNode(node: DependNode) {
+    public addDependNode(node: DependNode) {
       node.graph = this;
       node.dependNodeId = this.nodes.length + 1;
       this.nodes.push(node);
@@ -38,7 +34,7 @@ export function MixinDependGraph<
       }
     }
 
-    public removeNode(node: DependNode) {
+    public removeDependNode(node: DependNode) {
       const idx = this.nodes.indexOf(node);
       if(idx >= 0) {
         node.graph = null;
@@ -138,10 +134,6 @@ export function MixinDependNode<TBase extends Constructor>(Base: TBase) {
     public depends: Array<DependEdge> = [];
     public dependedBy: Array<DependEdge> = [];
     public dependNodeId: number = NaN;
-
-    constructor(args: any[]) {
-      super(args);
-    }
 
     public addDepend(target: DependNode) {
       for(let depend of this.depends) {

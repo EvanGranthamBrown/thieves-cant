@@ -112,7 +112,7 @@
     }
   },
 
-  "character-element": {
+  "character_element": {
     "attrs": {
       "character": {
         "type": "entity"
@@ -124,24 +124,38 @@
   },
 
   "feat": {
-    "includes": ["character-element"]
+    "includes": ["character_element"]
   },
 
   "class": {
-    "includes": ["character-element"],
+    "includes": ["character_element"],
     "attrs": {
       "levels": {
         "type": "entity list",
         "inverse": "class"
+      },
+      "hitDie": {
+        "type": "number"
       }
     }
   },
 
-  "class-level": {
+  "class_level": {
     "attrs": {
       "class": {
         "type": "entity"
       }
+    },
+    "mods": {
+      "class.character.hitPoints": "class.character.hitPoints + class.hitDie + class.character.constitutionMod"
     }
+  },
+
+  "fighter": {
+    "includes": ["class"]
+  },
+
+  "fighter-1": {
+    "includes": ["class_level"]
   }
 }
