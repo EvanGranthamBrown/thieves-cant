@@ -73,6 +73,25 @@ describe('MixinDependGraph.dependsInEvalOrder()', () => {
     expect(depends).toEqual([node3, node4, node2, node5, node1]);
   });
 
+  it('updates if changes are made to the graph after the first run', () => {
+    node1.addDepend(node2);
+    node1.addDepend(node4);
+    node2.addDepend(node3);
+    node5.addDepend(node3);
+
+    graph.findDependCycle();
+    graph.dependsInEvalOrder();
+
+    let node6 = new NodeClass();
+    graph.addDependNode(node6);
+    node6.addDepend(node3);
+    graph.removeDependNode(node5);
+
+    graph.findDependCycle();
+    const depends = graph.dependsInEvalOrder();
+    expect(depends).toEqual([node3, node4, node2, node6, node1]);
+  });
+
   it('requires findDependCycle() to run first', () => {
     node1.addDepend(node2);
     node1.addDepend(node4);

@@ -35,7 +35,7 @@ export function MixinDependGraph<
     public removeDependNode(node: DependNode) {
       const idx = this.__nodes.indexOf(node);
       if(idx >= 0) {
-        this.__nodes.slice(idx);
+        this.__nodes.splice(idx, 1);
         node.__removeFromDependGraph(this);
       }
     }
@@ -143,18 +143,25 @@ export interface IDependNode {
   hasDependConnections(): boolean;
 
   __graph: IDependGraph | null;
-
   __findDependCycle(path: Set<IDependNode>);
   __addToDependGraph(graph: IDependGraph);
   __removeFromDependGraph(graph: IDependGraph);
 }
 
+let dependNodeId = 1;
+
 export function MixinDependNode<TBase extends Constructor>(Base: TBase) {
   return class DependNode extends Base implements IDependNode {
     public __graph: IDependGraph | null = null;
+    public dependNodeId: number = NaN;
     public depends: Array<DependEdge> = [];
     public dependedBy: Array<DependEdge> = [];
-    public dependNodeId: number = NaN;
+
+    constructor(...args: any[]) {
+      super(...args);
+      this.dependNodeId = dependNodeId;
+      dependNodeId++;
+    }
 
     public addDepend(target: DependNode) {
       for(let depend of this.depends) {
@@ -175,8 +182,8 @@ export function MixinDependNode<TBase extends Constructor>(Base: TBase) {
       for(let i = 0; i < this.depends.length; i++) {
         const depend = this.depends[i];
         if(depend.to === target) {
-          this.depends.slice(i, 1);
-          target.dependedBy.slice(target.dependedBy.indexOf(depend), 1);
+          this.depends.splice(i, 1);
+          target.dependedBy.splice(target.dependedBy.indexOf(depend), 1);
           if(this.__graph) {
             this.__graph.__onDependRemoved();
           }
@@ -230,7 +237,6 @@ export function MixinDependNode<TBase extends Constructor>(Base: TBase) {
 
     public __addToDependGraph(graph) {
       this.__graph = graph;
-      this.dependNodeId = graph.__nodes.length;
       if(this.hasDependConnections()) {
         this.__graph.__onDependAdded();
       }
@@ -241,10 +247,15 @@ export function MixinDependNode<TBase extends Constructor>(Base: TBase) {
         throw new Error(`Called __removeFromDependGraph but __graph did not match argument.`);
       }
       this.__graph = null;
-      this.dependNodeId = NaN;
       if(this.hasDependConnections()) {
-        this.depends = [];
-        this.dependedBy = [];
+        for(let depend of this.depends) {
+          const target = depend.to;
+          target.dependedBy.splice(target.dependedBy.indexOf(depend), 1);
+        }
+        for(let depend of this.dependedBy) {
+          const target = depend.from;
+          target.depends.splice(target.depends.indexOf(depend), 1);
+        }
         graph.__onDependRemoved();
       }
     }
