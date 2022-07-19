@@ -1,12 +1,14 @@
 import * as ExprParse from './expr-parse';
+
 import { ExprType } from './expr-base';
+import { EntityBase, AttrBase } from './entity-base';
+
 import {
   AttributeTypeError,
   CircularDependencyError,
   ExpressionParseError,
   MalformedTemplateError,
 } from './errors';
-import { EntityBase, AttrBase } from './entity-base';
 
 export interface EntityTemplateProps {
   readonly attrs?: Record<string, AttrTemplateProps>;
@@ -16,6 +18,12 @@ export interface EntityTemplateProps {
 export class EntityTemplate extends EntityBase {
   constructor(name: string, props: EntityTemplateProps) {
     super(name);
+
+    if(props.includes) {
+      for(let include of props.includes) {
+        this.__includes.add(include);
+      }
+    }
 
     if(!props.attrs || Object.keys(props.attrs).length === 0) {
       // no properties, nothing to do

@@ -21,12 +21,22 @@ export const AttrBase = MixinDependNode(class {
 
 export const EntityBase = MixinDependGraph(AttrBase, class {
   public readonly __name: string;
-  public readonly __includes: Array<String>;
+  public readonly __includes: Set<string>;
   public __attrs: Record<string, AttrBase>;
 
   constructor(name: string) {
     this.__name = name;
-    this.__includes = [];
+    this.__includes = new Set<string>();
     this.__attrs = {};
+  }
+
+  public __is(entityType) {
+    if(this.__name === entityType) {
+      return true;
+    }
+    if(this.__includes.has(entityType)) {
+      return true;
+    }
+    return false;
   }
 });

@@ -13,6 +13,9 @@ export class Entity extends EntityBase {
     for(let prop in template.__attrs) {
       this.__attrs[prop].initialize(data);
     }
+    for(let include in template.__includes) {
+      this.__includes.add(include);
+    }
   }
 }
 
