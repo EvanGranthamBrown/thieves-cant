@@ -86,7 +86,6 @@
         "type": "number",
         "calc": "10 + dexterityMod"
       },
-
       "armorClass": {
         "type": "number",
         "calc": "baseArmorClass"
