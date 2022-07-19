@@ -33,6 +33,13 @@
 //   }
 // }
 
+export class InternalError extends Error {
+  constructor(message) {
+    super(message);
+    this.name = 'InternalError';
+  }
+};
+
 export class AttributeTypeError extends Error {
   constructor(message) {
     super(message);
@@ -58,5 +65,12 @@ export class CircularDependencyError extends Error {
   constructor(message) {
     super(message);
     this.name = 'CircularDependencyError';
+  }
+};
+
+export class UnmetDependencyError extends Error {
+  constructor(message) {
+    super(message);
+    this.name = 'UnmetDependencyError';
   }
 };

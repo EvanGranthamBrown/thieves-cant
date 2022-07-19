@@ -1,3 +1,5 @@
+import { InternalError } from './errors';
+
 export enum ExprType {
   Number = 'number',
   Text = 'text',
@@ -10,6 +12,26 @@ export enum ExprType {
   TrueFalseList = 'true-false list',
 
   Any = 'any',
+}
+
+export function typeFromListType(listType: ExprType) {
+  switch(listType) {
+    case ExprType.NumberList: {
+      return ExprType.Number;
+    }
+    case ExprType.TextList: {
+      return ExprType.Text;
+    }
+    case ExprType.EntityList: {
+      return ExprType.Entity;
+    }
+    case ExprType.TrueFalseList: {
+      return ExprType.TrueFalse;
+    }
+    default: {
+      throw new InternalError(`${listType} is not a list type.`);
+    }
+  }
 }
 
 export class ParseNode {

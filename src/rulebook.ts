@@ -1,5 +1,7 @@
 import { EntityTemplate, EntityTemplateProps } from './entity-template';
+import { Entity } from './entity';
 import { MixinDependGraph, MixinDependNode } from './mixin-depend-graph';
+import { InternalError } from './errors';
 
 export const RulebookEntry = MixinDependNode(class {
   public name: string;
@@ -8,7 +10,7 @@ export const RulebookEntry = MixinDependNode(class {
   public json: Record<string, any> | undefined;
   public template: EntityTemplate | undefined;
 
-  constructor(rulebook, name, baseJson) {
+  constructor(rulebook: Rulebook, name: string, baseJson: Record<string, any>) {
     this.name = name;
     this.rulebook = rulebook;
     this.__setBaseJson(baseJson);
@@ -20,7 +22,7 @@ export const RulebookEntry = MixinDependNode(class {
   modify(newBaseJson: Record<string, any>) {
     this.__setBaseJson(newBaseJson);
     this.__teardown();
-    this.rulebook.rebuild();
+    this.rulebook.__rebuild();
   }
 
   // Set the baseJson and make sure it contains all the props we expect.
@@ -52,10 +54,11 @@ export const RulebookEntry = MixinDependNode(class {
       this.removeDepend(depend.to);
     }
 
-    torndownEntries.add(this);
+    // This is now torn down. If you encounter it again (due to a circular
+    // dependency), ignore it.
+    torndown.add(this);
 
-    // Anything which includes this entry must also teardown.
-    // We pass a list of torndown entries in case of circular dependencies.
+    // Anything which includes this entry must also be torn down.
     for(let depend of this.dependedBy) {
       depend.from.__teardown(torndown);
     }
@@ -76,7 +79,7 @@ export const RulebookEntry = MixinDependNode(class {
     for(let depend of this.depends) {
       this.__include(depend.to.json);
     }
-    this.template = new EntityTemplate(this.name, this.json);
+    this.template = new EntityTemplate(this.rulebook, this.name, this.json);
   }
 
   __include(json: Record<string, any>) {
@@ -104,28 +107,49 @@ export const RulebookEntry = MixinDependNode(class {
   }
 });
 
-
 export const Rulebook = MixinDependGraph(RulebookEntry, class {
   public name: string;
   public entries: Record<string, RulebookEntry>;
 
   constructor(name: string, json: Record<string, any>) {
+    // Mixin disables TypeScript type checking. Sad. We have to do it ourselves.
+    if(typeof name !== "string" || typeof json !== "object" || json === null) {
+      throw new InternalError(`Invalid params for Rulebook: Expected (string, object), got: (${typeof name}, ${typeof json})`);
+    }
     this.name = name;
     this.entries = {};
     this.onDependGraphReady(() => {
       for(let name in json) {
-        this.addEntry(name, new RulebookEntry(this, name, json[name]));
+        const entry = new RulebookEntry(this, name, json[name]);
+        this.entries[name] = entry;
+        this.addDependNode(entry);
       }
-      this.rebuild();
+      this.__rebuild();
     });
   }
 
-  addEntry(name: string, entry: RulebookEntry) {
+  public addEntry(name: string, json: Record<string, any>) {
+    const entry = new RulebookEntry(this, name, json);
     this.entries[name] = entry;
     this.addDependNode(entry);
+    this.__rebuild();
   }
 
-  rebuild() {
+  public removeEntry(name: string) {
+    if(!this.entries[name]) {
+      return;
+    }
+    this.entries[name].__teardown();
+    this.removeDependNode(this.entries[name]);
+    delete this.entries[name];
+    this.__rebuild();
+  }
+
+  public create(name: string, data: Record<string, any> = {}) {
+    return new Entity(this.entries[name].template, data);
+  }
+
+  __rebuild() {
     for(let name in this.entries) {
       const entry = this.entries[name];
       if(!entry.template) {

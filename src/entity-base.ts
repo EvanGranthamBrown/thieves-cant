@@ -7,9 +7,10 @@ export const AttrBase = MixinDependNode(class {
 
   public readonly calc: ParseNode | undefined;
   public readonly valid: ParseNode | undefined;
-  public readonly mods: Record<string, ParseNode>;
+  public readonly mods: Record<string, ParseNode> = {};
   public readonly type: ExprType;
-  public readonly mutable: boolean;
+  public readonly entityTypes: Array<string> = [];
+  public readonly mutable: boolean = false;
 
   constructor(owner: EntityBase, name: string, typ: ExprType) {
     this.owner = owner;
@@ -23,11 +24,14 @@ export const EntityBase = MixinDependGraph(AttrBase, class {
   public readonly __name: string;
   public readonly __includes: Set<string>;
   public __attrs: Record<string, AttrBase>;
+  public __rulebook: any;
+  // _rulebook type should be Rulebook, but that causes a circular import dependency
 
-  constructor(name: string) {
+  constructor(rulebook: rulebook, name: string) {
     this.__name = name;
     this.__includes = new Set<string>();
     this.__attrs = {};
+    this.__rulebook = rulebook;
   }
 
   public __is(entityType) {

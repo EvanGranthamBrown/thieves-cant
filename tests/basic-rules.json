@@ -1,8 +1,17 @@
 {
+  "item": {
+    "attrs": {
+      "weight": {
+        "type": "number"
+      }
+    }
+  },
+
   "container": {
     "attrs": {
       "inventory": {
-        "type": "entity list"
+        "type": "entity list",
+        "entityTypes": ["item"]
       }
     }
   },
@@ -103,10 +112,12 @@
     "attrs": {
       "feats": {
         "type": "entity list",
+        "entityTypes": ["feat"],
         "inverse": "character"
       },
       "classes": {
         "type": "entity list",
+        "entityTypes": ["class"],
         "inverse": "character"
       }
     }
@@ -115,7 +126,8 @@
   "character_element": {
     "attrs": {
       "character": {
-        "type": "entity"
+        "type": "entity",
+        "entityTypes": ["character"]
       },
       "description": {
         "type": "text"
@@ -132,6 +144,7 @@
     "attrs": {
       "levels": {
         "type": "entity list",
+        "entityTypes": ["class_level"],
         "inverse": "class"
       },
       "hitDie": {
@@ -143,7 +156,8 @@
   "class_level": {
     "attrs": {
       "class": {
-        "type": "entity"
+        "type": "entity",
+        "entityTypes": ["class"]
       }
     },
     "mods": {
@@ -155,7 +169,7 @@
     "includes": ["class"]
   },
 
-  "fighter-1": {
+  "fighter_1": {
     "includes": ["class_level"]
   }
 }

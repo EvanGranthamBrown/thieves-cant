@@ -1,40 +1,43 @@
-import { Rulebook } from '../src/rulebook';
+import { Rulebook, RulebookEntry } from '../src/rulebook';
 import { EntityTemplate } from '../src/entity-template';
+import { Entity } from '../src/entity';
 import { ExprType } from '../src/expr-base';
+import { InternalError } from '../src/errors';
 
-describe('Rulebook', () => {
-  let rulebook: Rulebook;
+let rulebook: Rulebook;
 
-  beforeEach(() => {
-    rulebook = new Rulebook('Test Rulebook', {
-      item: {
-        attrs: {
-          weight: {
-            type: 'number',
-          },
+beforeEach(() => {
+  rulebook = new Rulebook('Test Rulebook', {
+    item: {
+      attrs: {
+        weight: {
+          type: 'number',
         },
       },
-      armor: {
-        includes: ['item'],
-        attrs: {
-          baseArmorClass: {
-            type: 'number',
-          },
+    },
+    armor: {
+      includes: ['item'],
+      attrs: {
+        baseArmorClass: {
+          type: 'number',
         },
       },
-      plate: {
-        includes: ['armor'],
-        attrs: {
-          weight: {
-            calc: '65',
-          },
-          baseArmorClass: {
-            calc: '18',
-          },
+    },
+    plate: {
+      includes: ['armor'],
+      attrs: {
+        weight: {
+          calc: '65',
+        },
+        baseArmorClass: {
+          calc: '18',
         },
       },
-    });
-  })
+    },
+  });
+});
+
+describe('Rulebook constructor', () => {
   it('generates an entry for each top-level key in the JSON', () => {
     expect(Object.keys(rulebook.entries)).toEqual(['item', 'armor', 'plate']);
   });
@@ -96,6 +99,67 @@ describe('Rulebook', () => {
     expect(plate.__is('armor')).toBeTruthy();
     expect(plate.__is('plate')).toBeTruthy();
     expect(plate.__is('flumph')).toBeFalsy();
+  });
+  it('does type checking on its inputs (compensating for TypeScript loss of type info on mixin)', () => {
+    expect(() => {
+      // missing name
+      new Rulebook({ item: {} });
+    }).toThrow(InternalError);
+    expect(() => {
+      // name is not a string
+      new Rulebook(2, { item: {} });
+    }).toThrow(InternalError);
+    expect(() => {
+      // missing json
+      new Rulebook("Rulebook");
+    }).toThrow(InternalError);
+    expect(() => {
+      // json is not object type
+      new Rulebook("Rulebook", 5);
+    }).toThrow(InternalError);
+    expect(() => {
+      // json is null
+      new Rulebook("Rulebook", null);
+    }).toThrow(InternalError);
+  });
+});
+
+describe('Rulebook.addEntry', () => {
+  it('creates a new entry', () => {
+    rulebook.addEntry('studded_leather', {
+      includes: ['armor'],
+      attrs: {
+        weight: {
+          calc: '13',
+        },
+        baseArmorClass: {
+          calc: '12',
+        },
+      },
+    });
+    expect(rulebook.entries.studded_leather).toBeInstanceOf(RulebookEntry);
+  });
+});
+
+describe('Rulebook.removeEntry', () => {
+  it('removes an entry', () => {
+    rulebook.removeEntry('plate');
+    expect(rulebook.entries.plate).toBeUndefined();
+  });
+});
+
+describe('Rulebook.create', () => {
+  it('instantiates the appropriate object', () => {
+    const plate = rulebook.create('plate');
+    expect(plate).toBeInstanceOf(Entity);
+    expect(plate.__name).toBe('plate');
+    expect(plate.weight).toEqual(65);
+    expect(plate.baseArmorClass).toEqual(18);
+  });
+
+  it('passes data values into the new object', () => {
+    const item = rulebook.create('item', { weight: 5 });
+    expect(item.weight).toEqual(5);
   });
 });
 

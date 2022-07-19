@@ -1,26 +1,25 @@
 import { EntityTemplate } from '../src/entity-template';
 import { Entity } from '../src/entity';
-import basicRules from './basic-rules.json';
+import basicRulesJson from './basic-rules.json';
 import { Rulebook } from '../src/rulebook';
 
-const rulebook = new Rulebook(basicRules);
-// to do: convert all these tests to using the Rulebook
+let basicRules: Rulebook;
+beforeEach(() => {
+  basicRules = new Rulebook('Basic Rules', basicRulesJson);
+});
 
-for(const name in basicRules) {
-  describe(`template for "${name}"`, () => {
-    it(`loads "${name}" without erroring`, () => {
-      expect(() => {
-        new EntityTemplate(name, basicRules[name]);
-      }).not.toThrow();
+describe('basic rules entries', () => {
+  for(const name in basicRulesJson) {
+    it(`has a template for "${name}"`, () => {
+      expect(basicRules.entries[name].template).toBeInstanceOf(EntityTemplate);
     });
-  });
-}
+  }
+});
 
 describe('creature entity', () => {
   it('loads without erroring', () => {
-    const creatureTemplate = new EntityTemplate('creature', basicRules.creature);
     expect(() => {
-      new Entity(creatureTemplate, {
+      const creature = new Entity(basicRules.entries.creature.template, {
         strength: 8,
         dexterity: 14,
         constitution: 13,
@@ -32,8 +31,7 @@ describe('creature entity', () => {
   });
 
   it('has correct base stats', () => {
-    const creatureTemplate = new EntityTemplate('creature', basicRules.creature);
-    const creature = new Entity(creatureTemplate, {
+    const creature = new Entity(basicRules.entries.creature.template, {
       strength: 8,
       dexterity: 14,
       constitution: 13,
@@ -50,8 +48,7 @@ describe('creature entity', () => {
   });
 
   it('has correct derived stats', () => {
-    const creatureTemplate = new EntityTemplate('creature', basicRules.creature);
-    const creature = new Entity(creatureTemplate, {
+    const creature = new Entity(basicRules.entries.creature.template, {
       strength: 8,
       dexterity: 14,
       constitution: 13,
@@ -80,12 +77,11 @@ describe('creature entity', () => {
 
     // note that we do NOT require the template to be rebuilt every time.
     // the template is supposed to do most of the heavy lifting here.
-    const creatureTemplate = new EntityTemplate('creature', basicRules.creature);
 
     const start = Date.now(); // millisecs since epoch
     let creatures = [];
     for(let i = 0; i < 1000; i++) {
-      creatures.push(new Entity(creatureTemplate, {
+      creatures.push(new Entity(basicRules.entries.creature.template, {
         strength: 8,
         dexterity: 14,
         constitution: 13,

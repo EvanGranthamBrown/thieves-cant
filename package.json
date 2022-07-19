@@ -4,7 +4,8 @@
   "description": "RPG rules engine.",
   "main": "index.js",
   "scripts": {
-    "test": "jest"
+    "test": "jest",
+    "test-v": "jest --verbose"
   },
   "author": "Evan Grantham-Brown",
   "license": "MIT",

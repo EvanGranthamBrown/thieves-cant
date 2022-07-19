@@ -1,11 +1,11 @@
 import { EntityTemplate } from '../src/entity-template';
-import { CircularDependencyError, AttributeTypeError } from '../src/errors';
+import { CircularDependencyError, AttributeTypeError, MalformedTemplateError } from '../src/errors';
 import { ExprType } from '../src/expr-base';
 
 describe('EntityTemplate', () => {
   it('runs on a valid template without erroring', () => {
     expect(() => {
-      const entity = new EntityTemplate('creature', {
+      const entity = new EntityTemplate(null, 'creature', {
         attrs: {
           dexterity: {
             type: 'number',
@@ -21,7 +21,7 @@ describe('EntityTemplate', () => {
 
   it('errors when an attribute type does not match its calc formula', () => {
     expect(() => {
-      const entity = new EntityTemplate('creature', {
+      const entity = new EntityTemplate(null, 'creature', {
         attrs: {
           dexterity: {
             type: 'number',
@@ -35,8 +35,74 @@ describe('EntityTemplate', () => {
     }).toThrow(AttributeTypeError);
   });
 
+  it('sets non-calculated attributes to mutable by default', () => {
+    const entity = new EntityTemplate(null, 'creature', {
+      attrs: {
+        dexterity: {
+          type: 'number',
+        },
+        dexMod: {
+          type: 'number',
+          calc: 'floor((dexterity - 10) / 2)',
+        },
+      },
+    });
+
+    expect(entity.__attrs.dexterity.mutable).toBeTruthy();
+  });
+
+  it('sets calculated attributes to immutable', () => {
+    const entity = new EntityTemplate(null, 'creature', {
+      attrs: {
+        dexterity: {
+          type: 'number',
+        },
+        dexMod: {
+          type: 'number',
+          calc: 'floor((dexterity - 10) / 2)',
+        },
+      },
+    });
+
+    expect(entity.__attrs.dexMod.mutable).toBeFalsy();
+  });
+
+  it('respects the mutable flag on non-calculated attributes', () => {
+    const entity = new EntityTemplate(null, 'creature', {
+      attrs: {
+        dexterity: {
+          type: 'number',
+          mutable: false,
+        },
+        dexMod: {
+          type: 'number',
+          calc: 'floor((dexterity - 10) / 2)',
+        },
+      },
+    });
+
+    expect(entity.__attrs.dexterity.mutable).toBeFalsy();
+  });
+
+  it('errors if the mutable flag is set on a calculated attribute', () => {
+    expect(() => {
+      const entity = new EntityTemplate(null, 'creature', {
+        attrs: {
+          dexterity: {
+            type: 'number',
+          },
+          dexMod: {
+            type: 'number',
+            calc: 'floor((dexterity - 10) / 2)',
+            mutable: true,
+          },
+        },
+      });
+    }).toThrow(MalformedTemplateError);
+  });
+
   it('computes dependencies properly', () => {
-    const entity = new EntityTemplate('creature', {
+    const entity = new EntityTemplate(null, 'creature', {
       attrs: {
         dexterity: {
           type: 'number',
@@ -73,7 +139,7 @@ describe('EntityTemplate', () => {
   });
 
   it('computes reverse dependencies properly', () => {
-    const entity = new EntityTemplate('creature', {
+    const entity = new EntityTemplate(null, 'creature', {
       attrs: {
         dexterity: {
           type: 'number',
@@ -111,7 +177,7 @@ describe('EntityTemplate', () => {
 
   it('errors on a circular dependency', () => {
     expect(() => {
-      const entity = new EntityTemplate('creature', {
+      const entity = new EntityTemplate(null, 'creature', {
         attrs: {
           strMod: {
             type: 'number',
