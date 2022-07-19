@@ -1,6 +1,9 @@
 import { EntityTemplate } from '../src/entity-template';
 import { Entity } from '../src/entity';
 import basicRules from './basic-rules.json';
+import { Rulebook } from '../src/rulebook';
+
+const rulebook = new Rulebook(basicRules);
 
 for(const name in basicRules) {
   describe(`template for "${name}"`, () => {
