@@ -69,7 +69,7 @@ describe('creature entity', () => {
     expect(creature.hitPoints).toEqual(0);
   });
 
-  it('can instantiate 1,000 creatures in less than a second', () => {
+  it('can instantiate 1,000 plain creatures in less than a second', () => {
     // on my computer, this takes around 60 ms. I'm reasonably comfortable
     // saying that if this test does not pass on your hardware, you need new
     // hardware.

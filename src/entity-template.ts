@@ -9,7 +9,7 @@ import {
 import { EntityBase, AttrBase } from './entity-base';
 
 export interface EntityTemplateProps {
-  readonly attrs: Record<string, AttrTemplateProps>;
+  readonly attrs?: Record<string, AttrTemplateProps>;
   readonly includes?: Array<String>;
 }
 
@@ -19,7 +19,7 @@ export class EntityTemplate extends EntityBase {
   constructor(name: string, props: EntityTemplateProps) {
     super(name);
 
-    if(Object.keys(props.attrs).length === 0) {
+    if(!props.attrs || Object.keys(props.attrs).length === 0) {
       // no properties, nothing to do
       return;
     }

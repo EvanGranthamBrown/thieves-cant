@@ -96,5 +96,52 @@
         "calc": "0"
       }
     }
+  },
+
+  "character": {
+    "includes": ["creature"],
+    "attrs": {
+      "feats": {
+        "type": "entity list",
+        "inverse": "character"
+      },
+      "classes": {
+        "type": "entity list",
+        "inverse": "character"
+      }
+    }
+  },
+
+  "character-element": {
+    "attrs": {
+      "character": {
+        "type": "entity"
+      },
+      "description": {
+        "type": "text"
+      }
+    }
+  },
+
+  "feat": {
+    "includes": ["character-element"]
+  },
+
+  "class": {
+    "includes": ["character-element"],
+    "attrs": {
+      "levels": {
+        "type": "entity list",
+        "inverse": "class"
+      }
+    }
+  },
+
+  "class-level": {
+    "attrs": {
+      "class": {
+        "type": "entity"
+      }
+    }
   }
 }
