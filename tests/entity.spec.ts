@@ -369,4 +369,93 @@ describe('Entity attribute value assignment', () => {
 
     expect(container.encumbrance).toEqual(16);
   });
+
+  // This is the ultimate test of my dependency system, and it is currently
+  // failing. Making this pass may require constructing a dependency graph
+  // at runtime, whenever entity relationships change. It may also require
+  // identifying a bug in this here test, because something virtually identical
+  // on the basic rules passes just fine. But I'm on vacation right now, stop.
+
+  // it('tracks a web of cascading updates across items', () => {
+  //   const rulebook = new Rulebook('Test Rulebook', {
+  //     item: {
+  //       attrs: {
+  //         weight: {
+  //           type: 'number',
+  //         },
+  //         totalWeight: {
+  //           type: 'number',
+  //           calc: 'weight',
+  //         },
+  //       },
+  //     },
+  //     has_inventory: {
+  //       attrs: {
+  //         inventory: {
+  //           type: 'entity list',
+  //           entityTypes: ['item'],
+  //           reverse: 'owner',
+  //         },
+  //         contentsWeight: {
+  //           type: 'number',
+  //           calc: 'sum(inventory.totalWeight)',
+  //         }
+  //       },
+  //     },
+  //     container: {
+  //       includes: ['item', 'has_inventory'],
+  //       totalWeight: {
+  //         type: 'number',
+  //         calc: 'weight + contentsWeight',
+  //       },
+  //     },
+  //   });
+
+  //   const room = rulebook.create('has_inventory');
+
+  //   const chest = rulebook.create('container', { weight: 10 });
+  //   const bag = rulebook.create('container', { weight: 1 });
+  //   const pouch = rulebook.create('container', { weight: 0.5 });
+
+  //   const gem = rulebook.create('item', { weight: 0.1 });
+  //   const tome = rulebook.create('item', { weight: 5 });
+  //   const sword = rulebook.create('item', { weight: 3 });
+
+  //   pouch.inventory = [gem];
+  //   bag.inventory = [tome];
+
+  //   chest.inventory = [pouch, sword];
+  //   room.inventory = [chest, bag];
+
+  //   // room contents includes everything
+  //   expect(room.contentsWeight).toBe(19.6);
+
+  //   // chest contents include the sword, the pouch, and the gem
+  //   expect(chest.contentsWeight).toBe(3.6);
+  //   expect(chest.totalWeight).toBe(13.6);
+
+  //   // bag contents include the tome
+  //   expect(bag.contentsWeight).toBe(5);
+  //   expect(bag.totalWeight).toBe(6);
+
+  //   // now move the gem into the bag
+  //   gem.owner = bag;
+
+  //   // room should not have changed
+  //   expect(room.contentsWeight).toBe(19.6);
+
+  //   // chest should be 0.1 pounds lighter
+  //   expect(chest.contentsWeight).toBe(3.5);
+  //   expect(chest.totalWeight).toBe(13.5);
+
+  //   // bag should be 0.1 pounds heavier
+  //   expect(bag.contentsWeight).toBe(5.1);
+  //   expect(bag.totalWeight).toBe(6.1);
+
+  //   // now take the bag out of the room
+  //   room.inventory = [chest];
+
+  //   // room contents weight should now be only the chest
+  //   expect(room.contentsWeight).toBe(13.5);
+  // });
 });

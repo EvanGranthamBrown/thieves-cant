@@ -139,5 +139,50 @@ describe('creature entity', () => {
     }
     const end = Date.now(); // millisecs since epoch
     expect(end - start).toBeLessThan(1000);
-  })
+  });
+
+  it('tracks a web of cascading updates across items', () => {
+    const room = basicRules.create('container', { weight: 0 });
+
+    const chest = basicRules.create('container', { weight: 10 });
+    const bag = basicRules.create('container', { weight: 1 });
+    const pouch = basicRules.create('container', { weight: 0.5 });
+
+    const gem = basicRules.create('item', { weight: 0.1 });
+    const tome = basicRules.create('item', { weight: 5 });
+    const sword = basicRules.create('item', { weight: 3 });
+
+    pouch.inventory = [gem];
+    bag.inventory = [tome];
+
+    chest.inventory = [pouch, sword];
+    room.inventory = [chest, bag];
+
+    // room contents includes everything
+    expect(room.totalWeight).toBe(19.6);
+
+    // chest contents include the sword, the pouch, and the gem
+    expect(chest.totalWeight).toBe(13.6);
+
+    // bag contents include the tome
+    expect(bag.totalWeight).toBe(6);
+
+    // now move the gem into the bag
+    gem.holder = bag;
+
+    // room should not have changed
+    expect(room.totalWeight).toBe(19.6);
+
+    // chest should be 0.1 pounds lighter
+    expect(chest.totalWeight).toBe(13.5);
+
+    // bag should be 0.1 pounds heavier
+    expect(bag.totalWeight).toBe(6.1);
+
+    // now take the bag out of the room
+    room.inventory = [chest];
+
+    // room contents weight should now be only the chest
+    expect(room.totalWeight).toBe(13.5);
+  });
 });
