@@ -11,7 +11,8 @@
     "attrs": {
       "inventory": {
         "type": "entity list",
-        "entityTypes": ["item"]
+        "entityTypes": ["item"],
+        "reverse": "owner"
       }
     }
   },
@@ -113,22 +114,18 @@
       "feats": {
         "type": "entity list",
         "entityTypes": ["feat"],
-        "inverse": "character"
+        "reverse": "character"
       },
       "classes": {
         "type": "entity list",
         "entityTypes": ["class"],
-        "inverse": "character"
+        "reverse": "character"
       }
     }
   },
 
   "character_element": {
     "attrs": {
-      "character": {
-        "type": "entity",
-        "entityTypes": ["character"]
-      },
       "description": {
         "type": "text"
       }
@@ -145,7 +142,7 @@
       "levels": {
         "type": "entity list",
         "entityTypes": ["class_level"],
-        "inverse": "class"
+        "reverse": "class"
       },
       "hitDie": {
         "type": "number"
@@ -154,12 +151,6 @@
   },
 
   "class_level": {
-    "attrs": {
-      "class": {
-        "type": "entity",
-        "entityTypes": ["class"]
-      }
-    },
     "mods": {
       "class.character.hitPoints": "class.character.hitPoints + class.hitDie + class.character.constitutionMod"
     }

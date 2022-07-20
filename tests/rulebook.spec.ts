@@ -2,7 +2,7 @@ import { Rulebook, RulebookEntry } from '../src/rulebook';
 import { EntityTemplate } from '../src/entity-template';
 import { Entity } from '../src/entity';
 import { ExprType } from '../src/expr-base';
-import { InternalError } from '../src/errors';
+import { InternalError, MalformedTemplateError } from '../src/errors';
 
 let rulebook: Rulebook;
 
@@ -121,6 +121,164 @@ describe('Rulebook constructor', () => {
       // json is null
       new Rulebook("Rulebook", null);
     }).toThrow(InternalError);
+  });
+  it('creates a reverse for an entity-typed attribute, with defaults', () => {
+    rulebook = new Rulebook('Test Rulebook', {
+      item: {
+        attrs: {
+          weight: {
+            type: 'number',
+          },
+        },
+      },
+      trinket: {},
+      container: {
+        attrs: {
+          inventory: {
+            type: 'entity list',
+            entityTypes: ['item', 'trinket'],
+            reverse: 'owner',
+          },
+        },
+      },
+      oddity: {},
+    });
+    const item = rulebook.entries.item.template;
+    const trinket = rulebook.entries.trinket.template;
+
+    expect(item.__attrs.owner.type).toEqual(ExprType.Entity);
+    expect(item.__attrs.owner.entityTypes).toEqual(['container']);
+
+    expect(trinket.__attrs.owner.type).toEqual(ExprType.Entity);
+    expect(trinket.__attrs.owner.entityTypes).toEqual(['container']);
+  });
+  it('respects specified reverseType and reverseEntityTypes when present', () => {
+    rulebook = new Rulebook('Test Rulebook', {
+      item: {
+        attrs: {
+          weight: {
+            type: 'number',
+          },
+        },
+      },
+      trinket: {},
+      container: {
+        attrs: {
+          inventory: {
+            type: 'entity list',
+            entityTypes: ['item', 'trinket'],
+            reverse: 'owner',
+            reverseType: 'entity list',
+            reverseEntityTypes: ['container', 'oddity'],
+          },
+        },
+      },
+      oddity: {},
+    });
+    const item = rulebook.entries.item.template;
+    const trinket = rulebook.entries.trinket.template;
+
+    expect(item.__attrs.owner.type).toEqual(ExprType.EntityList);
+    expect(item.__attrs.owner.entityTypes).toEqual(['container', 'oddity']);
+
+    expect(trinket.__attrs.owner.type).toEqual(ExprType.EntityList);
+    expect(trinket.__attrs.owner.entityTypes).toEqual(['container', 'oddity']);
+  });
+  it('respects an existing reverse when present', () => {
+    rulebook = new Rulebook('Test Rulebook', {
+      item: {
+        attrs: {
+          weight: {
+            type: 'number',
+          },
+          // define an owner attribute on item; its properties should remain
+          // unchanged
+          owner: {
+            type: 'entity list',
+            entityTypes: ['container', 'oddity'],
+            reverse: 'inventory',
+          },
+        },
+      },
+      trinket: {},
+      container: {
+        attrs: {
+          inventory: {
+            type: 'entity list',
+            entityTypes: ['item', 'trinket'],
+            reverse: 'owner',
+          },
+        },
+      },
+      oddity: {},
+    });
+    const item = rulebook.entries.item.template;
+    const trinket = rulebook.entries.trinket.template;
+
+    expect(item.__attrs.owner.type).toEqual(ExprType.EntityList);
+    expect(item.__attrs.owner.entityTypes).toEqual(['container', 'oddity']);
+
+    // the trinket property had no owner attribute defined, so it gets the
+    // default values.
+    expect(trinket.__attrs.owner.type).toEqual(ExprType.Entity);
+    expect(trinket.__attrs.owner.entityTypes).toEqual(['container']);
+  });
+  it('errors when an entity-typed attribute lacks a "reverse" property', () => {
+    expect(() => {
+      new Rulebook('Test Rulebook', {
+        item: {
+          attrs: {
+            weight: {
+              type: 'number',
+            },
+          },
+        },
+        trinket: {},
+        container: {
+          attrs: {
+            inventory: {
+              type: 'entity list',
+              entityTypes: ['item', 'trinket'],
+              // reverse: 'owner',
+            },
+          },
+        },
+        oddity: {},
+      });
+    }).toThrow(MalformedTemplateError);
+  });
+  it('errors when there is a conflict between a reverse and an existing property', () => {
+    expect(() => {
+      new Rulebook('Test Rulebook', {
+        item: {
+          attrs: {
+            weight: {
+              type: 'number',
+            },
+            // define an owner attribute on item
+            owner: {
+              type: 'entity',
+              // note the entity types
+              entityTypes: ['container', 'oddity'],
+              reverse: 'inventory',
+            },
+          },
+        },
+        trinket: {},
+        container: {
+          attrs: {
+            inventory: {
+              type: 'entity list',
+              entityTypes: ['item', 'trinket'],
+              reverse: 'owner',
+              // reverseEntityTypes does not match item.owner.entityTypes - error
+              reverseEntityTypes: ['container'],
+            },
+          },
+        },
+        oddity: {},
+      });
+    }).toThrow(MalformedTemplateError);
   });
 });
 

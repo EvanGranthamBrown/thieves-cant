@@ -116,6 +116,7 @@ describe('Entity attribute value assignment', () => {
           firstThing: {
             type: 'entity',
             entityTypes: ['item'],
+            reverse: 'owner',
           },
         },
       },
@@ -141,6 +142,7 @@ describe('Entity attribute value assignment', () => {
           firstThing: {
             type: 'entity',
             entityTypes: ['item'],
+            reverse: 'owner',
           },
         },
       },
@@ -169,6 +171,7 @@ describe('Entity attribute value assignment', () => {
           firstThing: {
             type: 'entity',
             entityTypes: ['item', 'oddity'], // <-- added "oddity"
+            reverse: 'owner',
           },
         },
       },
@@ -194,6 +197,7 @@ describe('Entity attribute value assignment', () => {
           inventory: {
             type: 'entity list',
             entityTypes: ['item'],
+            reverse: 'owner',
           },
         },
       },
@@ -225,6 +229,7 @@ describe('Entity attribute value assignment', () => {
           inventory: {
             type: 'entity list',
             entityTypes: ['item'],
+            reverse: 'owner',
           },
         },
       },
@@ -241,4 +246,73 @@ describe('Entity attribute value assignment', () => {
     // did not change anything
     expect(container.inventory).toEqual([]);
   });
+
+  it('correctly evaluates a calc that reaches into other entities', () => {
+    const rulebook = new Rulebook('Test Rulebook', {
+      item: {
+        attrs: {
+          weight: {
+            type: 'number',
+          },
+        },
+      },
+      container: {
+        attrs: {
+          inventory: {
+            type: 'entity list',
+            entityTypes: ['item'],
+            reverse: 'owner',
+          },
+          encumbrance: {
+            type: 'number',
+            calc: 'sum(inventory.weight)',
+          }
+        },
+      },
+      oddity: {},
+    });
+    const item1 = rulebook.create('item', { weight: 5 });
+    const item2 = rulebook.create('item', { weight: 10 });
+    const item3 = rulebook.create('item', { weight: 2 });
+    const container = rulebook.create('container');
+    container.inventory = [item1, item2, item3];
+
+    expect(container.encumbrance).toEqual(17);
+  });
+
+  // it('registers changes in other entities', () => {
+  //   const rulebook = new Rulebook('Test Rulebook', {
+  //     item: {
+  //       attrs: {
+  //         weight: {
+  //           type: 'number',
+  //         },
+  //       },
+  //     },
+  //     container: {
+  //       attrs: {
+  //         inventory: {
+  //           type: 'entity list',
+  //           entityTypes: ['item'],
+  //           reverse: 'owner',
+  //         },
+  //         encumbrance: {
+  //           type: 'number',
+  //           calc: 'sum(inventory.weight)',
+  //         }
+  //       },
+  //     },
+  //     oddity: {},
+  //   });
+  //   const item1 = rulebook.create('item', { weight: 5 });
+  //   const item2 = rulebook.create('item', { weight: 10 });
+  //   const item3 = rulebook.create('item', { weight: 2 });
+  //   const container = rulebook.create('container');
+  //   container.inventory = [item1, item2, item3];
+
+  //   // change one of the other entities!
+  //   item1.weight = 4;
+
+  //   expect(container.encumbrance).toEqual(16);
+  // });
 });

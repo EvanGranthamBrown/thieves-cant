@@ -9,7 +9,7 @@ describe('MixinDependGraph', () => {
       }
     });
 
-    const GraphClass = MixinDependGraph(NodeClass, class {
+    const GraphClass = MixinDependGraph(class {
       public bar: number;
 
       constructor(bar) {
@@ -27,7 +27,7 @@ describe('MixinDependGraph', () => {
 
 describe('MixinDependGraph.dependsInEvalOrder()', () => {
   const NodeClass = MixinDependNode(class {});
-  const GraphClass = MixinDependGraph(NodeClass, class {});
+  const GraphClass = MixinDependGraph(class {});
   let graph: GraphClass;
   let node1, node2, node3, node4, node5: NodeClass;
 
@@ -119,7 +119,7 @@ describe('MixinDependGraph.dependsInEvalOrder()', () => {
 
 describe('MixinDependGraph.findDependCycle()', () => {
   const NodeClass = MixinDependNode(class {});
-  const GraphClass = MixinDependGraph(NodeClass, class {});
+  const GraphClass = MixinDependGraph(class {});
   let graph: GraphClass;
   let node1, node2, node3, node4: NodeClass;
 

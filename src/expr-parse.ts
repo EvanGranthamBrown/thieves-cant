@@ -93,6 +93,9 @@ export class MemberExpressionNode extends ParseNode {
 
   public eval(props: EvalProps): any {
     const obj = this.obj.eval(props);
+    if(Array.isArray(obj)) {
+      return obj.map((x) => x[this.prop]);
+    }
     return obj[this.prop];
   }
 
@@ -111,7 +114,7 @@ export class MemberExpressionNode extends ParseNode {
   }
 
   public identifiers(): string[] {
-    return this.obj.identifiers();
+    return this.obj.identifiers().map((x) => `${x}.${this.prop}`);
   }
 }
 

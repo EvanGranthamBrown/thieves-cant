@@ -23,6 +23,7 @@ export class Entity extends EntityBase {
 
 export class Attr extends AttrBase {
   public value: any;
+  public __recomputing: boolean = false;
 
   constructor(owner: Entity, template: AttrTemplate) {
     super(owner, template.name, template.type);
@@ -40,9 +41,7 @@ export class Attr extends AttrBase {
         set(value: any) {
           self.validate(value, self.type);
           self.value = value;
-          for(let depend of self.dependedBy) {
-            depend.from.recompute();
-          }
+          self.recompute();
         },
         enumerable: true,
       });
@@ -120,13 +119,13 @@ export class Attr extends AttrBase {
     }
 
     if(this.valid) {
-
+      // apply custom validation here
     }
   }
 
   public cloneDependencies(template: AttrTemplate) {
     for(let templateDep of template.depends) {
-      const attr = this.owner.__attrs[templateDep.from.name];
+      const attr = this.owner.__attrs[templateDep.to.name];
       this.addDepend(attr);
     }
   }
@@ -169,8 +168,20 @@ export class Attr extends AttrBase {
   }
 
   public recompute() {
-    if(this.calc) {
-      this.value = this.calc.eval({ vals: this.owner });
+    if(this.__recomputing) {
+      // In case of cyclic dependencies.
+      return;
+    }
+    this.__recomputing = true;
+    try {
+      if(this.calc) {
+        this.value = this.calc.eval({ vals: this.owner });
+      }
+      for(let depend of this.dependedBy) {
+        depend.from.recompute();
+      }
+    } finally {
+      this.__recomputing = false;
     }
   }
 }

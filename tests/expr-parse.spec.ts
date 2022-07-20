@@ -96,4 +96,52 @@ describe('parse', () => {
     };
     expect(parsed.describe(props)).toEqual('(5 + ((1d8 + 2) - 0.3)) + " and roll 2d8"');
   });
+
+  it('parses a list function without erroring', () => {
+    expect(() => {
+      ExprParse.parse('sum(inventory)');
+    }).not.toThrow();
+  });
+
+  it('evaluates a list function correctly', () => {
+    const parsed = ExprParse.parse('sum(inventory)');
+    const props = {
+      vals: {
+        inventory: [1,2,3],
+      },
+    };
+    expect(parsed.eval(props)).toEqual(6);
+  });
+
+  it('parses a member expression without erroring', () => {
+    expect(() => {
+      ExprParse.parse('item.weight');
+    }).not.toThrow();
+  });
+
+  it('evaluates a member expression correctly', () => {
+    const parsed = ExprParse.parse('item.weight');
+    const props = {
+      vals: {
+        item: {
+          weight: 5,
+        },
+      },
+    };
+    expect(parsed.eval(props)).toEqual(5);
+  });
+
+  it('evaluates a member expression on an array to return an array', () => {
+    const parsed = ExprParse.parse('inventory.weight');
+    const props = {
+      vals: {
+        inventory: [
+          { weight: 3 },
+          { weight: 5 },
+          { weight: 7 },
+        ],
+      },
+    };
+    expect(parsed.eval(props)).toEqual([3, 5, 7]);
+  });
 });

@@ -20,7 +20,7 @@ export const AttrBase = MixinDependNode(class {
   }
 });
 
-export const EntityBase = MixinDependGraph(AttrBase, class {
+export const EntityBase = MixinDependGraph(class {
   public readonly __name: string;
   public readonly __includes: Set<string>;
   public __attrs: Record<string, AttrBase>;

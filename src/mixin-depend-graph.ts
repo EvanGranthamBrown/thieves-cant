@@ -18,11 +18,9 @@ interface IDependGraph {
   __inEvalOrder: boolean;
 }
 
-export function MixinDependGraph<
-  TBase extends Constructor, TDependNode extends Constructor<IDependNode>
->(DependNode: TDependNode, Base: TBase) {
+export function MixinDependGraph<TBase extends Constructor>(Base: TBase) {
   return class DependGraph extends Base implements IDependGraph {
-    public __nodes: Array<DependNode> = [];
+    public __nodes: Array<IDependNode> = [];
     public __inEvalOrder: boolean = false;
     public dependGraphReady: boolean;
     public dependsAcyclic: boolean | undefined = undefined;
@@ -40,13 +38,13 @@ export function MixinDependGraph<
       this.__graphReadyCallback = callback;
     }
 
-    public addDependNode(node: DependNode) {
+    public addDependNode(node: IDependNode) {
       this.__errInConstructor('addDependNode');
       this.__nodes.push(node);
       node.__addToDependGraph(this);
     }
 
-    public removeDependNode(node: DependNode) {
+    public removeDependNode(node: IDependNode) {
       this.__errInConstructor('removeDependNode');
       const idx = this.__nodes.indexOf(node);
       if(idx >= 0) {
@@ -72,7 +70,7 @@ export function MixinDependGraph<
       }
       for(let node of this.__nodes) {
         if(node.hasUnmarkedDepends()) {
-          const output = node.__findDependCycle(new Set<DependNode>());
+          const output = node.__findDependCycle(new Set<IDependNode>());
           if(output) {
             this.dependsAcyclic = false;
             this.dependsCyclic = true;
@@ -100,8 +98,8 @@ export function MixinDependGraph<
       if(this.dependsCyclic) {
         throw new CircularDependencyError('dependsInEvalOrder() requires an acyclic graph.');
       }
-      const leafNodes = new Set<DependNode>(this.__nodes.filter((x) => !x.hasUnmarkedDepends()));
-      const ordering = new Array<DependNode>();
+      const leafNodes = new Set<IDependNode>(this.__nodes.filter((x) => !x.hasUnmarkedDepends()));
+      const ordering = new Array<IDependNode>();
       this.__addToOrdering(ordering, leafNodes);
       this.unmarkDepends();
       this.__inEvalOrder = true;
@@ -119,8 +117,8 @@ export function MixinDependGraph<
 
     // Recursive function: Add the specified nodes to the ordering. Then find all nodes
     // whose dependencies have now been added, and repeat on those nodes.
-    __addToOrdering(ordering: Array<DependNode>, nodes: Set<DependNode>) {
-      const nextNodes = new Set<DependNode>();
+    __addToOrdering(ordering: Array<IDependNode>, nodes: Set<IDependNode>) {
+      const nextNodes = new Set<IDependNode>();
       for(let node of nodes) {
         ordering.push(node);
         for(let depend of node.dependedBy) {
@@ -189,7 +187,7 @@ export function MixinDependNode<TBase extends Constructor>(Base: TBase) {
       dependNodeId++;
     }
 
-    public addDepend(target: DependNode) {
+    public addDepend(target: IDependNode) {
       for(let depend of this.depends) {
         if(depend.to === target) {
           return;
@@ -204,7 +202,7 @@ export function MixinDependNode<TBase extends Constructor>(Base: TBase) {
       }
     }
 
-    public removeDepend(target: DependNode) {
+    public removeDepend(target: IDependNode) {
       for(let i = 0; i < this.depends.length; i++) {
         const depend = this.depends[i];
         if(depend.to === target) {
@@ -229,7 +227,7 @@ export function MixinDependNode<TBase extends Constructor>(Base: TBase) {
 
     // Given a path through the graph that leads to this node, explores all
     // branches of that path to see if any result in a cycle.
-    public __findDependCycle(path: Set<DependNode>) {
+    public __findDependCycle(path: Set<IDependNode>) {
       if(path.has(this)) {
         // We have found a cycle. Return it.
         const pathArr = Array.from(path);

@@ -114,7 +114,16 @@ export class AttrTemplate extends AttrBase {
     let ids = new Set<string>();
     if(this.calc) {
       for(const id of this.calc.identifiers()) {
-        ids.add(id);
+        // When computing template dependencies, we only look at the first identifier in a member
+        // expression.
+
+        // Example: You have a "container" template, with an "inventory" attribute (an list of items) and
+        // an "encumbrance" attribute that is calculated as "sum(inventory.weight)".
+
+        // When we get to parsing "inventory.weight", we flag "encumbrance" as having a dependency on
+        // "inventory", because that is an attribute of this same container. However, we are not
+        // concerned with ".weight", because that reaches into another entity.
+        ids.add(id.split('.')[0]);
       }
     }
     for(const id of ids) {

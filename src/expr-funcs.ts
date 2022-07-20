@@ -150,6 +150,23 @@ const lookup = {
       returns: ExprType.Number,
     }),
   ],
+  'sum': [
+    new ExprFunc({
+      name: 'sum',
+      func: (args: number[][1]) => {
+        let output = 0;
+        for(let item of args[0]) {
+          output += item;
+        }
+        return output;
+      },
+      args: [
+        [ExprType.NumberList],
+      ],
+      op: false,
+      returns: ExprType.Number,
+    }),
+  ],
 };
 
 export function findExprFunc(name: string, args: ParseNode[], op: boolean) {

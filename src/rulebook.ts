@@ -1,7 +1,7 @@
 import { EntityTemplate, EntityTemplateProps } from './entity-template';
 import { Entity } from './entity';
 import { MixinDependGraph, MixinDependNode } from './mixin-depend-graph';
-import { InternalError } from './errors';
+import { InternalError, MalformedTemplateError } from './errors';
 
 export const RulebookEntry = MixinDependNode(class {
   public name: string;
@@ -31,6 +31,14 @@ export const RulebookEntry = MixinDependNode(class {
     if(!this.baseJson.attrs) {
       this.baseJson.attrs = {};
     }
+    for(const prop in this.baseJson.attrs) {
+      const attr = this.baseJson.attrs[prop];
+      for(const key of ['entityTypes', 'reverseEntityTypes']) {
+        if(attr[key] !== undefined && !Array.isArray(attr[key])) {
+          attr[key] = [attr[key]];
+        }
+      }
+    }
     if(!this.baseJson.mods) {
       this.baseJson.mods = {};
     }
@@ -41,11 +49,26 @@ export const RulebookEntry = MixinDependNode(class {
 
   // Tear down the constructed JSON and template for this entry (typically
   // because the baseJson changed). Then do the same for each entry that
-  // includes this entry.
+  // includes this entry or is attribute-linked to it.
   __teardown(torndown: Set<RulebookEntry> = new Set<RulebookEntry>()) {
     if(torndown.has(this)) {
       return;
     }
+
+    // Make a list of other entries we're gonna have to get rid of.
+    const alsoTeardown = new Set<RulebookEntry>();
+
+    if(this.json) {
+      for(let prop in this.json.attrs) {
+        const attr = this.json.attrs[prop];
+        if(attr.type === 'entity' || attr.type === 'entity list') {
+          for(let target of attr.entityTypes) {
+            alsoTeardown.add(this.rulebook.entries[target]);
+          }
+        }
+      }
+    }
+
     this.json = undefined;
     this.template = undefined;
 
@@ -54,13 +77,17 @@ export const RulebookEntry = MixinDependNode(class {
       this.removeDepend(depend.to);
     }
 
-    // This is now torn down. If you encounter it again (due to a circular
-    // dependency), ignore it.
+    // This is now torn down. If you encounter it again, ignore it.
     torndown.add(this);
 
     // Anything which includes this entry must also be torn down.
     for(let depend of this.dependedBy) {
-      depend.from.__teardown(torndown);
+      alsoTeardown.add(depend.from);
+    }
+
+    // Now spread the wealth to everyone else on the teardown list.
+    for(let target of alsoTeardown) {
+      target.__teardown(torndown);
     }
   }
 
@@ -70,6 +97,40 @@ export const RulebookEntry = MixinDependNode(class {
     this.json = JSON.parse(JSON.stringify(this.baseJson));
     for(let include of this.baseJson.includes) {
       this.addDepend(this.rulebook.entries[include]);
+    }
+  }
+
+  // Create the reverse of each entity-typed attribute, if it doesn't already
+  // exist.
+  __createReverseAttrs() {
+    for(const prop in this.baseJson.attrs) {
+      const attr = this.baseJson.attrs[prop];
+      if(attr.type === 'entity' || attr.type === 'entity list') {
+        if(!attr.reverse) {
+          throw new MalformedTemplateError(`${this.name}.${prop} has type ${attr.type} but is missing a "reverse" property.`);
+        }
+        for(let target of attr.entityTypes) {
+          const targetAttrs = this.rulebook.entries[target].json.attrs;
+          if(targetAttrs[attr.reverse] === undefined) {
+            targetAttrs[attr.reverse] = {};
+          }
+          this.__mergeReverseAttr(target, attr, targetAttrs[attr.reverse]);
+        }
+      }
+    }
+  }
+
+  __mergeReverseAttr(target, attr, reverseAttr) {
+    const required = { type: attr.reverseType, entityTypes: attr.reverseEntityTypes };
+    const defaults = { type: 'entity', entityTypes: [this.name] };
+    for(let prop in defaults) {
+      if(reverseAttr[prop] === undefined) {
+        reverseAttr[prop] = (required[prop] === undefined) ? defaults[prop] : required[prop];
+      } else {
+        if(required[prop] !== reverseAttr[prop] && required[prop] !== undefined) {
+          throw new MalformedTemplateError(`${this.name}.${prop} sets reverse ${prop} to ${JSON.stringify(required[prop])}, but ${target} specifies ${JSON.stringify(reverseAttr[prop])}.`);
+        }
+      }
     }
   }
 
@@ -107,7 +168,7 @@ export const RulebookEntry = MixinDependNode(class {
   }
 });
 
-export const Rulebook = MixinDependGraph(RulebookEntry, class {
+export const Rulebook = MixinDependGraph(class {
   public name: string;
   public entries: Record<string, RulebookEntry>;
 
@@ -156,6 +217,15 @@ export const Rulebook = MixinDependGraph(RulebookEntry, class {
         // __reset will reconstruct the entry's list of includes,
         // and replace its json with its baseJson.
         entry.__reset();
+      }
+    }
+
+    for(let name in this.entries) {
+      const entry = this.entries[name];
+      if(!entry.template) {
+        // Generate our reverse attributes in the json of other
+        // entries.
+        entry.__createReverseAttrs();
       }
     }
 
