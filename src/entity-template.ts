@@ -49,6 +49,7 @@ export interface AttrTemplateProps {
   readonly entityTypes?: Array<string> | string;
   readonly mods: Record<string, string>;
   readonly mutable?: boolean;
+  readonly reverse?: string;
 }
 
 export class AttrTemplate extends AttrBase {
@@ -98,6 +99,7 @@ export class AttrTemplate extends AttrBase {
           }
         }
       }
+      this.reverse = json.reverse;
       this.mutable = (json.mutable === false) ? false : true;
     }
   }

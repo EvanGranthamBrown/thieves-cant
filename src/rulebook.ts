@@ -114,16 +114,31 @@ export const RulebookEntry = MixinDependNode(class {
           if(targetAttrs[attr.reverse] === undefined) {
             targetAttrs[attr.reverse] = {};
           }
-          this.__mergeReverseAttr(target, attr, targetAttrs[attr.reverse]);
+          this.__mergeReverseAttr(target, prop, attr, targetAttrs[attr.reverse]);
         }
       }
     }
   }
 
-  __mergeReverseAttr(target, attr, reverseAttr) {
-    const required = { type: attr.reverseType, entityTypes: attr.reverseEntityTypes };
-    const defaults = { type: 'entity', entityTypes: [this.name] };
-    for(let prop in defaults) {
+  __mergeReverseAttr(target, name, attr, reverseAttr) {
+    const required = {
+      type: attr.reverseType,
+      entityTypes: attr.reverseEntityTypes,
+      reverse: name,
+    };
+    if(attr.calc) {
+      // the reverse of a calculated attribute must be immutable.
+      required.mutable = false;
+      if(reverseAttr.calc) {
+        throw new MalformedTemplateError(`${this.name}.${prop} is calculated; it cannot also specify a calculated attribute as its reverse.`);
+      }
+    }
+    const defaults = {
+      type: 'entity',
+      entityTypes: [this.name],
+      mutable: true,
+    };
+    for(let prop of ['type', 'entityTypes', 'reverse', 'mutable']) {
       if(reverseAttr[prop] === undefined) {
         reverseAttr[prop] = (required[prop] === undefined) ? defaults[prop] : required[prop];
       } else {

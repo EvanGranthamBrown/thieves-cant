@@ -148,9 +148,13 @@ describe('Rulebook constructor', () => {
 
     expect(item.__attrs.owner.type).toEqual(ExprType.Entity);
     expect(item.__attrs.owner.entityTypes).toEqual(['container']);
+    expect(item.__attrs.owner.reverse).toEqual('inventory');
+    expect(item.__attrs.owner.mutable).toBeTruthy();
 
     expect(trinket.__attrs.owner.type).toEqual(ExprType.Entity);
     expect(trinket.__attrs.owner.entityTypes).toEqual(['container']);
+    expect(trinket.__attrs.owner.reverse).toEqual('inventory');
+    expect(trinket.__attrs.owner.mutable).toBeTruthy();
   });
   it('respects specified reverseType and reverseEntityTypes when present', () => {
     rulebook = new Rulebook('Test Rulebook', {
@@ -197,6 +201,7 @@ describe('Rulebook constructor', () => {
             type: 'entity list',
             entityTypes: ['container', 'oddity'],
             reverse: 'inventory',
+            mutable: false,
           },
         },
       },
@@ -217,11 +222,46 @@ describe('Rulebook constructor', () => {
 
     expect(item.__attrs.owner.type).toEqual(ExprType.EntityList);
     expect(item.__attrs.owner.entityTypes).toEqual(['container', 'oddity']);
+    expect(item.__attrs.owner.mutable).toBeFalsy();
 
     // the trinket property had no owner attribute defined, so it gets the
     // default values.
     expect(trinket.__attrs.owner.type).toEqual(ExprType.Entity);
     expect(trinket.__attrs.owner.entityTypes).toEqual(['container']);
+    expect(trinket.__attrs.owner.mutable).toBeTruthy();
+  });
+  it('forces the reverse of a computed attribute to be immutable', () => {
+    rulebook = new Rulebook('Test Rulebook', {
+      item: {
+        attrs: {
+          weight: {
+            type: 'number',
+          },
+        },
+      },
+      trinket: {},
+      container: {
+        attrs: {
+          inventory: {
+            type: 'entity list',
+            entityTypes: ['item', 'trinket'],
+            reverse: 'owner',
+          },
+          inventoryCopy: {
+            type: 'entity list',
+            entityTypes: ['item', 'trinket'],
+            calc: 'inventory',
+            reverse: 'ownerCopy',
+          }
+        },
+      },
+      oddity: {},
+    });
+    const item = rulebook.entries.item.template;
+    const trinket = rulebook.entries.trinket.template;
+
+    expect(item.__attrs.ownerCopy.mutable).toBeFalsy();
+    expect(trinket.__attrs.ownerCopy.mutable).toBeFalsy();
   });
   it('errors when an entity-typed attribute lacks a "reverse" property', () => {
     expect(() => {
@@ -278,6 +318,42 @@ describe('Rulebook constructor', () => {
         },
         oddity: {},
       });
+    }).toThrow(MalformedTemplateError);
+  });
+  it('errors when the reverse of a computed attribute is marked as mutable', () => {
+    expect(() => {
+      new Rulebook('Test Rulebook', {
+        item: {
+          attrs: {
+            weight: {
+              type: 'number',
+            },
+            ownerCopy: {
+              type: 'entity',
+              entityTypes: ['container'],
+              reverse: 'inventoryCopy',
+              mutable: true,
+            }
+          },
+        },
+        trinket: {},
+        container: {
+          attrs: {
+            inventory: {
+              type: 'entity list',
+              entityTypes: ['item', 'trinket'],
+              reverse: 'owner',
+            },
+            inventoryCopy: {
+              type: 'entity list',
+              entityTypes: ['item', 'trinket'],
+              calc: 'inventory',
+              reverse: 'ownerCopy',
+            }
+          },
+        },
+        oddity: {},
+      })
     }).toThrow(MalformedTemplateError);
   });
 });

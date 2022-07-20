@@ -10,6 +10,7 @@ export const AttrBase = MixinDependNode(class {
   public readonly mods: Record<string, ParseNode> = {};
   public readonly type: ExprType;
   public readonly entityTypes: Array<string> = [];
+  public readonly reverse: string | undefined;
   public readonly mutable: boolean = false;
 
   constructor(owner: EntityBase, name: string, typ: ExprType) {
@@ -42,5 +43,9 @@ export const EntityBase = MixinDependGraph(class {
       return true;
     }
     return false;
+  }
+
+  public __attrList() {
+    return Object.values(this.__attrs);
   }
 });
