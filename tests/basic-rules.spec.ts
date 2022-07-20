@@ -70,6 +70,24 @@ describe('creature entity', () => {
     expect(creature.hitPoints).toEqual(0);
   });
 
+  it('changes derived stats when the base values change', () => {
+    const creature = new Entity(basicRules.entries.creature.template, {
+      strength: 8,
+      dexterity: 14,
+      constitution: 13,
+      intelligence: 15,
+      wisdom: 10,
+      charisma: 12,
+    });
+
+    creature.dexterity = 16;
+    // dexterityMod, baseArmorClass, armorClass should all go up 1
+
+    expect(creature.dexterityMod).toEqual(3);
+    expect(creature.baseArmorClass).toEqual(13);
+    expect(creature.armorClass).toEqual(13);
+  });
+
   it('can instantiate 1,000 plain creatures in less than a second', () => {
     // on my computer, this takes around 60 ms. I'm reasonably comfortable
     // saying that if this test does not pass on your hardware, you need new
