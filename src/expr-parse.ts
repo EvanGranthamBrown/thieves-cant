@@ -96,6 +96,9 @@ export class MemberExpressionNode extends ParseNode {
     if(Array.isArray(obj)) {
       return obj.map((x) => x[this.prop]);
     }
+    if(obj === null) {
+      return null;
+    }
     return obj[this.prop];
   }
 

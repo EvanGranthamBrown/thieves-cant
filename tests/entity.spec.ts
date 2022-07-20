@@ -183,6 +183,34 @@ describe('Entity attribute value assignment', () => {
     expect(container.firstThing).toBe(oddity);
   });
 
+  it('accepts an entity in an entity attribute if it includes one of the entityTypes', () => {
+    const rulebook = new Rulebook('Test Rulebook', {
+      item: {
+        attrs: {
+          weight: {
+            type: 'number',
+          },
+        },
+      },
+      container: {
+        attrs: {
+          firstThing: {
+            type: 'entity',
+            entityTypes: ['item'],
+            reverse: 'owner',
+          },
+        },
+      },
+      oddity: {
+        includes: ['item'], // <-- now should count as an item
+      },
+    });
+    const oddity = rulebook.create('oddity');
+    const container = rulebook.create('container');
+    container.firstThing = oddity;
+    expect(container.firstThing).toBe(oddity);
+  });
+
   it('assigns the reverse relationship when changing an entity attribute', () => {
     const rulebook = new Rulebook('Test Rulebook', {
       item: {

@@ -3,22 +3,37 @@
     "attrs": {
       "weight": {
         "type": "number"
+      },
+      "totalWeight": {
+        "type": "number",
+        "calc": "weight"
+      }
+    }
+  },
+
+  "with_inventory": {
+    "attrs": {
+      "inventory": {
+        "type": "entity list",
+        "entityTypes": ["item"],
+        "reverse": "holder"
       }
     }
   },
 
   "container": {
+    "includes": ["item", "with_inventory"],
     "attrs": {
-      "inventory": {
-        "type": "entity list",
-        "entityTypes": ["item"],
-        "reverse": "owner"
+      "totalWeight": {
+        "type": "number",
+        "calc": "weight + sum(inventory.totalWeight)"
       }
     }
   },
 
   "creature": {
-    "includes": ["container"],
+    "includes": ["with_inventory"],
+
     "attrs": {
       "strength": {
         "type": "number"
@@ -104,6 +119,11 @@
       "hitPoints": {
         "type": "number",
         "calc": "0"
+      },
+
+      "encumbrance": {
+        "type": "number",
+        "calc": "sum(inventory.totalWeight)"
       }
     }
   },

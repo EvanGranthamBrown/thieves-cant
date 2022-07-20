@@ -6,23 +6,26 @@ import { AttributeTypeError } from './errors';
 let entityId = 1;
 
 export class Entity extends EntityBase {
-  public __id;
+  public __id: number;
+  public __dirty: boolean;
 
   constructor(template: EntityTemplate, data: Record<string, any>) {
     super(template.__rulebook, template.__name);
     this.__id = entityId;
     entityId++;
+    this.__dirty = false;
+    for(let include of template.__includes) {
+      this.__includes.add(include);
+    }
     for(let prop in template.__attrs) {
       this.__attrs[prop] = new Attr(this, template.__attrs[prop], data[prop]);
     }
     for(let prop in template.__attrs) {
       this.__attrs[prop].cloneDependencies(template.__attrs[prop]);
     }
-    for(let prop in template.__attrs) {
-      this.__attrs[prop].initialize(data);
-    }
-    for(let include in template.__includes) {
-      this.__includes.add(include);
+    // use the eval order established in the template; saves time
+    for(let attr of template.dependsInEvalOrder()) {
+      this.__attrs[attr.name].initialize(data);
     }
   }
 
@@ -49,18 +52,22 @@ export class Entity extends EntityBase {
   }
 
   public __recompute() {
-    for(const attr of this.__attrList()) {
+    let output = this.__dirty;
+
+    for(const prop in this.__attrs) {
+      const attr = this.__attrs[prop];
       if(attr.calc) {
-        attr.recompute();
+        output = attr.__recompute() || output;
       }
     }
+
+    this.__dirty = false;
+    return output;
   }
 }
 
 export class Attr extends AttrBase {
   public value: any;
-  public __recomputing: boolean = false;
-  public __dirty: boolean = false;
 
   constructor(owner: Entity, template: AttrTemplate) {
     super(owner, template.name, template.type);
@@ -87,34 +94,35 @@ export class Attr extends AttrBase {
     }
   }
 
-  assignNewValue(value: any, validation: boolean = true) {
+  assignNewValue(value: any, entityCascade: boolean = true): boolean {
     if(this.__frozen) {
       // We got hit by a cascading recompute. Disregard.
-      return;
+      return false;
     }
 
-    const oldValue = this.value;
-    let newValue = value;
-    if(validation) {
-      newValue = this.validate(value, this.type);
-    }
+    let newValue = this.validate(value, this.type);
     if(this.equals(newValue)) {
-      return;
+      // No change was made.
+      return false;
     }
+
+    let linkedEntities: Set<Entity>;
 
     // The new value is legit different, and it is valid.
-    // Collect a list of linked entities that might be affected.
-    const linkedEntities = this.owner.__linkedEntities();
+    if(entityCascade) {
+      // Collect a list of linked entities that might be affected.
+      linkedEntities = this.owner.__linkedEntities();
 
-    // If the new value is an entity or list of entities, put them in too.
-    if(this.isEntityTyped()) {
-      for(let entity of this.asArray(newValue)) {
-        linkedEntities.add(entity);
+      // If the new value is an entity or list of entities, put them in too.
+      if(this.isEntityTyped()) {
+        for(let entity of this.asArray(newValue)) {
+          linkedEntities.add(entity);
+        }
       }
     }
 
     // Get a list of all our old reverse attributes.
-    const oldReverses = this.reverseAttrs();
+    const oldReverses = this.__reverseAttrs();
 
     // Now apply the change. Freeze it so it can't be changed by cascading recomputes.
     this.value = newValue;
@@ -122,58 +130,104 @@ export class Attr extends AttrBase {
 
     // Recompute everything that depends on this.
     for(let depend of this.dependedBy) {
-      depend.from.recompute();
+      depend.from.__recompute();
     }
 
     // Get a list of all our new reverse attributes.
-    const newReverses = this.reverseAttrs();
+    const newReverses = this.__reverseAttrs();
 
-    // Remove ourselves from the old reverses.
+    // Remove ourself from the old reverses.
     for(let attr of oldReverses) {
-      attr.reverseRemove(this.owner);
+      attr.__reverseRemove(this.owner);
     }
 
-    // Add ourselves to the new reverses.
+    // Add ourself to the new reverses.
     for(let attr of newReverses) {
-      attr.reverseAdd(this.owner);
+      attr.__reverseAdd(this.owner);
     }
 
     // Now have all the linked entities recompute.
-    for(let entity of linkedEntities) {
-      entity.__recompute();
+    if(entityCascade) {
+      this.__cascadingRecompute(new Set<Entity>([this.owner]), linkedEntities);
     }
 
     // Finally, unfreeze.
     this.__frozen = false;
+
+    // A change was made.
+    return true;
   }
 
-  public reverseRemove(entity) {
+  // We do a breadth-first recompute to avoid problems with branching cascades.
+  public __cascadingRecompute(done: Set<Entity>, targets: Set<Entity>) {
+    let currentTargets = targets;
+
+    while(currentTargets.size) {
+      const changedTargets = new Set<Entity>();
+      for(let target of currentTargets) {
+        done.add(target);
+        if(target.__recompute()) {
+          changedTargets.add(target);
+        }
+      }
+
+      currentTargets = new Set<Entity>();
+      for(let target of changedTargets) {
+        for(let entity of target.__linkedEntities()) {
+          if(!done.has(entity)) {
+            currentTargets.add(entity);
+          }
+        }
+      }
+    }
+  }
+
+  public __reverseRemove(entity: Entity) {
     if(this.type === ExprType.Entity && this.value === entity) {
-      this.assignNewValue(null);
+      this.value = null;
+      this.owner.__dirty = true;
     } else if(this.type === ExprType.EntityList && this.value) {
       const idx = this.value.indexOf(entity);
       if(idx >= 0) {
-        this.assignNewValue(this.value.slice(idx, 1));
+        this.value.splice(idx, 1);
+        this.owner.__dirty = true;
       }
     }
   }
 
-  public reverseAdd(entity) {
+  public __reverseAdd(entity: Entity) {
     if(this.type === ExprType.Entity && this.value !== entity) {
-      this.assignNewValue(entity);
+      if(this.value !== undefined && this.value !== null) {
+        const doubleReverse = this.__reverseAttrs()[0];
+        doubleReverse.owner.__dirty = true;
+        doubleReverse.__reverseRemove(this.owner);
+      }
+      this.value = entity;
     } else if(this.type === ExprType.EntityList) {
       if(this.value === undefined) {
-        this.assignNewValue([entity]);
+        this.value = [entity];
       } else if(!this.value.includes(entity)) {
-        this.assignNewValue([entity].concat(this.value));
+        this.value.push(entity);
       }
     }
+    this.owner.__dirty = true;
   }
 
-  public recompute() {
-    if(this.calc) {
-      this.assignNewValue(this.calc.eval({ vals: this.owner }));
+  public __reverseAttrs() {
+    if(!this.isEntityTyped() || this.value === null || this.value === undefined) {
+      return [];
     }
+    return this.asArray(this.value).map((x) => x.__attrs[this.reverse]);
+  }
+
+  public __recompute(): boolean {
+    if(this.calc) {
+      const oldValue = this.value;
+      const newValue = this.calc.eval({ vals: this.owner });
+      const output = this.assignNewValue(newValue, false);
+      return output;
+    }
+    return false;
   }
 
   public isEntityTyped() {
@@ -184,14 +238,7 @@ export class Attr extends AttrBase {
     return Array.isArray(val) ? val : [val];
   }
 
-  public reverseAttrs() {
-    if(!this.isEntityTyped() || this.value === null || this.value === undefined) {
-      return [];
-    }
-    return this.asArray(this.value).map((x) => x.__attrs[this.reverse]);
-  }
-
-  validate(val: any, typ: ExprType) {
+  public validate(val: any, typ: ExprType) {
     let converted: any = undefined;
     let listType: ExprType;
 
@@ -274,7 +321,7 @@ export class Attr extends AttrBase {
 
   public initialize(data: Record<string, any>) {
     if(this.calc) {
-      this.recompute();
+      this.__recompute();
     } else if(data[this.name] !== undefined) {
       this.validate(data[this.name], this.type);
       this.value = data[this.name];

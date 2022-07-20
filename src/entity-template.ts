@@ -25,11 +25,6 @@ export class EntityTemplate extends EntityBase {
       }
     }
 
-    if(!props.attrs || Object.keys(props.attrs).length === 0) {
-      // no properties, nothing to do
-      return;
-    }
-
     for(let prop in props.attrs) {
       this.__attrs[prop] = new AttrTemplate(this, prop, props.attrs[prop]);
     }

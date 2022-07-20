@@ -9,6 +9,12 @@ beforeEach(() => {
 });
 
 describe('basic rules entries', () => {
+  it('builds in less than a second', () => {
+    const start = Date.now(); // millisecs since epoch
+    new Rulebook('Basic Rules', basicRulesJson);
+    const end = Date.now(); // millisecs since epoch
+    expect(end - start).toBeLessThan(1000);
+  });
   for(const name in basicRulesJson) {
     it(`has a template for "${name}"`, () => {
       expect(basicRules.entries[name].template).toBeInstanceOf(EntityTemplate);
@@ -16,10 +22,37 @@ describe('basic rules entries', () => {
   }
 });
 
+describe('creatures with containers', () => {
+  it('computes encumbrance through multiple container levels', () => {
+    const creature = basicRules.create('creature', {
+      strength: 8,
+      dexterity: 14,
+      constitution: 13,
+      intelligence: 15,
+      wisdom: 10,
+      charisma: 12,
+    });
+    const backpack = basicRules.create('container', {
+      weight: 2,
+    });
+    const box = basicRules.create('container', {
+      weight: 1,
+    });
+    const egg = basicRules.create('item', {
+      weight: 0.1,
+    });
+
+    creature.inventory = [backpack];
+    backpack.inventory = [box];
+    egg.holder = box;
+    expect(creature.encumbrance).toEqual(3.1);
+  });
+});
+
 describe('creature entity', () => {
   it('loads without erroring', () => {
     expect(() => {
-      const creature = new Entity(basicRules.entries.creature.template, {
+      const creature = basicRules.create('creature', {
         strength: 8,
         dexterity: 14,
         constitution: 13,
@@ -31,7 +64,7 @@ describe('creature entity', () => {
   });
 
   it('has correct base stats', () => {
-    const creature = new Entity(basicRules.entries.creature.template, {
+    const creature = basicRules.create('creature', {
       strength: 8,
       dexterity: 14,
       constitution: 13,
@@ -48,7 +81,7 @@ describe('creature entity', () => {
   });
 
   it('has correct derived stats', () => {
-    const creature = new Entity(basicRules.entries.creature.template, {
+    const creature = basicRules.create('creature', {
       strength: 8,
       dexterity: 14,
       constitution: 13,
@@ -71,7 +104,7 @@ describe('creature entity', () => {
   });
 
   it('changes derived stats when the base values change', () => {
-    const creature = new Entity(basicRules.entries.creature.template, {
+    const creature = basicRules.create('creature', {
       strength: 8,
       dexterity: 14,
       constitution: 13,
@@ -89,17 +122,13 @@ describe('creature entity', () => {
   });
 
   it('can instantiate 1,000 plain creatures in less than a second', () => {
-    // on my computer, this takes around 60 ms. I'm reasonably comfortable
-    // saying that if this test does not pass on your hardware, you need new
-    // hardware.
-
     // note that we do NOT require the template to be rebuilt every time.
     // the template is supposed to do most of the heavy lifting here.
 
     const start = Date.now(); // millisecs since epoch
     let creatures = [];
     for(let i = 0; i < 1000; i++) {
-      creatures.push(new Entity(basicRules.entries.creature.template, {
+      creatures.push(basicRules.create('creature', {
         strength: 8,
         dexterity: 14,
         constitution: 13,

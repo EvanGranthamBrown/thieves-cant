@@ -46,6 +46,6 @@ export const EntityBase = MixinDependGraph(class {
   }
 
   public __attrList() {
-    return Object.values(this.__attrs);
+    return Object.keys(this.__attrs).map((x) => this.__attrs[x]);
   }
 });
