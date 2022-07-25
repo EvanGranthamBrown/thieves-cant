@@ -148,7 +148,7 @@ export class Attr extends AttrBase {
 
     // Now have all the linked entities recompute.
     if(entityCascade) {
-      this.__cascadingRecompute(new Set<Entity>([this.owner]), linkedEntities);
+      this.__cascadingRecompute(linkedEntities);
     }
 
     // Finally, unfreeze.
@@ -159,26 +159,22 @@ export class Attr extends AttrBase {
   }
 
   // We do a breadth-first recompute to avoid problems with branching cascades.
-  public __cascadingRecompute(done: Set<Entity>, targets: Set<Entity>) {
+  public __cascadingRecompute(targets: Set<Entity>) {
     let currentTargets = targets;
 
     while(currentTargets.size) {
-      const changedTargets = new Set<Entity>();
+      const nextTargets = new Set<Entity>();
       for(let target of currentTargets) {
-        done.add(target);
         if(target.__recompute()) {
-          changedTargets.add(target);
-        }
-      }
-
-      currentTargets = new Set<Entity>();
-      for(let target of changedTargets) {
-        for(let entity of target.__linkedEntities()) {
-          if(!done.has(entity)) {
-            currentTargets.add(entity);
+          // Recompute caused this entity to change. Add its links to the
+          // recompute list.
+          for(let nextTarget of target.__linkedEntities()) {
+            nextTargets.add(nextTarget);
           }
         }
       }
+
+      currentTargets = nextTargets;
     }
   }
 
